@@ -1,4 +1,4 @@
-# Dotfiles
+# row.dots
 
 Configuraciones personales gestionadas con [chezmoi](https://www.chezmoi.io/).
 
@@ -20,7 +20,7 @@ Configuraciones personales gestionadas con [chezmoi](https://www.chezmoi.io/).
 ### Comando único (mínimo)
 
 ```sh
-sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply https://github.com/Row0902/dotfiles.git
+sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply https://github.com/Row0902/row.dots.git
 ```
 
 Esto clona el repo, te pregunta tu nombre, email y signing key de git, y aplica todas las configuraciones. `~/.gitconfig.local` se genera automáticamente con tus respuestas. Para cambiar los valores, editá `~/.config/chezmoi/chezmoi.toml`.
@@ -81,7 +81,7 @@ El script busca claves privadas en este orden:
 ### Comando único (mínimo)
 
 ```powershell
-pwsh -c "& { iex (iwr 'https://get.chezmoi.io') } ; chezmoi init --apply https://github.com/Row0902/dotfiles.git"
+pwsh -c "& { iex (iwr 'https://get.chezmoi.io') } ; chezmoi init --apply https://github.com/Row0902/row.dots.git"
 ```
 
 Esto clona el repo, te pregunta tu nombre, email y signing key de git, y aplica todas las configuraciones. `~\.gitconfig.local` se genera automáticamente con tus respuestas. Para cambiar los valores, editá `~\.config\chezmoi\chezmoi.toml`.

@@ -251,7 +251,7 @@ if [ "${setup_ssh_remote:-false}" = true ]; then
     remote_url="$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || echo "")"
     if echo "$remote_url" | grep -q "^https://"; then
         info "Cambiando remote de HTTPS a SSH..."
-        git -C "$REPO_DIR" remote set-url origin git@github.com:Row0902/dotfiles.git
+        git -C "$REPO_DIR" remote set-url origin git@github.com:Row0902/row.dots.git
         ok "Remote cambiado a SSH"
     else
         ok "Remote ya está en SSH"

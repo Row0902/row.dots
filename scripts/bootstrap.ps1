@@ -228,7 +228,7 @@ function Convert-ToSshRemote {
 
     if ($remoteUrl -match '^https://') {
         Write-BootstrapInfo "Cambiando remote de HTTPS a SSH..."
-        git -C $repoDir remote set-url origin git@github.com:Row0902/dotfiles.git
+        git -C $repoDir remote set-url origin git@github.com:Row0902/row.dots.git
         Write-BootstrapOk "Remote cambiado a SSH"
     } else {
         Write-BootstrapOk "Remote ya está en SSH"

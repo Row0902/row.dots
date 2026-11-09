@@ -69,13 +69,20 @@
 
 [gpg]
     format = ssh
+{{- if eq .chezmoi.os "windows" }}
+[gpg "ssh"]
+    program = "C:/Windows/System32/OpenSSH/ssh-keygen.exe"
+{{- end }}
 
 [tag]
     gpgsign = true
 
 [credential]
-
+{{- if eq .chezmoi.os "windows" }}
+    helper = manager
+{{- else }}
     helper = cache --timeout 86400
+{{- end }}
 
 [pull]
 	rebase = true

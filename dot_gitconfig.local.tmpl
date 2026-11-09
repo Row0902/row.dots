@@ -2,9 +2,12 @@
     name = {{ .git.user_name }}
     email = {{ .git.user_email }}
     
-    {{- $sshKeyPath := printf "%s/.ssh/id_rsa.pub" .chezmoi.homeDir }}
-    {{- if stat $sshKeyPath }}
-    signingkey = "{{ include $sshKeyPath | trim -}}"
+    {{- $ed25519Path := printf "%s/.ssh/id_ed25519.pub" .chezmoi.homeDir }}
+    {{- $rsaPath := printf "%s/.ssh/id_rsa.pub" .chezmoi.homeDir }}
+    {{- if stat $ed25519Path }}
+    signingkey = "{{ include $ed25519Path | trim -}}"
+    {{- else if stat $rsaPath }}
+    signingkey = "{{ include $rsaPath | trim -}}"
     {{- else if .git.signingkey }}
     signingkey = "{{ .git.signingkey }}"
     {{- end }}

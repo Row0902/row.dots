@@ -11,9 +11,19 @@ Documents/PowerShell/**
 
 # Target paths (chezmoi matches .chezmoiignore against target filenames, not source)
 # run_once_before_install-packages.sh.tmpl → target: install-packages.sh
+# run_once_before_install-homebrew.sh.tmpl → target: install-homebrew.sh
 # run_once_before_install-packages.ps1.tmpl → target: install-packages.ps1
-{{ if eq .chezmoi.os "windows" }}install-packages.sh{{ end }}
-{{ if ne .chezmoi.os "windows" }}install-packages.ps1{{ end }}
+{{ if eq .chezmoi.os "windows" }}
+install-packages.sh
+install-homebrew.sh
+install-packages.ps1
+{{ end }}
+{{ if ne .chezmoi.os "windows" }}
+install-packages.ps1
+{{ end }}
 
 
 openspec/**
+README.md
+Brewfile
+scripts/**

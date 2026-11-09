@@ -1,217 +1,138 @@
-# row.dots
+<div align="center">
 
-Configuraciones personales gestionadas con [chezmoi](https://www.chezmoi.io/).
+# 🏡 row.dots
 
-## Stack
+**Entorno de desarrollo minimalista, reproducible y multiplataforma.**  
+Optimizado para **Windows 11** y **Linux**, gestionado declarativamente con [chezmoi](https://www.chezmoi.io/).
 
-| Componente | Herramienta |
-|------------|-------------|
-| Shell | [Fish](https://fishshell.com/) |
-| Prompt | [Starship](https://starship.rs/) |
-| Dotfiles | [chezmoi](https://www.chezmoi.io/) |
-| Editor | Neovim |
-| Diff | [Delta](https://dandavison.github.io/delta/) |
-| File list | [Eza](https://eza.rocks/) |
-| CD smart | [Zoxide](https://github.com/ajeetdsouza/zoxide) |
-| History | [Atuin](https://atuin.sh/) |
+[![chezmoi](https://img.shields.io/badge/managed%20by-chezmoi-blue?style=flat-square&logo=chezmoi)](https://www.chezmoi.io/)
+[![starship](https://img.shields.io/badge/prompt-starship-red?style=flat-square&logo=starship)](https://starship.rs/)
+[![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+[![git-signing](https://img.shields.io/badge/commits-ssh--signed-purple?style=flat-square&logo=git)](https://git-scm.com/)
 
-## Onboarding (nueva máquina)
+</div>
 
-### Comando único (mínimo)
+---
 
-```sh
-sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply https://github.com/Row0902/row.dots.git
-```
+## ⚡ Stack
 
-Esto clona el repo, te pregunta tu nombre, email y signing key de git, y aplica todas las configuraciones. `~/.gitconfig.local` se genera automáticamente con tus respuestas. Para cambiar los valores, editá `~/.config/chezmoi/chezmoi.toml`.
+| Componente | Herramienta | Propósito / Características |
+| :--- | :--- | :--- |
+| **Shell** | [Fish](https://fishshell.com/) / [Nushell](https://www.nushell.sh/) | Completado inteligente, sintaxis moderna y tipado estructurado |
+| **Prompt** | [Starship](https://starship.rs/) | Diseño modular tipo cápsula (*pills*) Tokyo Night con badge de OS |
+| **Gestión** | [chezmoi](https://www.chezmoi.io/) | Dotfiles basados en plantillas Go, soporte multi-OS y secretos |
+| **Git & Diff** | [Delta](https://github.com/dandavison/delta) | Syntax highlighting, vistas side-by-side y firma criptográfica SSH |
+| **Entornos** | [direnv](https://direnv.net/) | Carga automática de variables de entorno y layouts para Python (`uv`, `venv`) |
+| **Productividad** | [zoxide](https://github.com/ajeetdsouza/zoxide), [eza](https://eza.rocks/), [bat](https://github.com/sharkdp/bat), [fzf](https://github.com/junegunn/fzf) | Reemplazos modernos para `cd`, `ls`, `cat` y búsqueda interactiva |
+| **Paquetes** | [Scoop](https://scoop.sh/) / [Homebrew](https://brew.sh/) | Instalación sin privilegios de administrador en Windows y Linux |
 
-> > **Nota**: el comando único funciona en terminales interactivas (TTY). Para entornos no-interactivos (CI, pipes), usá el bootstrap completo.
+---
 
-### Bootstrap completo (opcional, recomendado)
+## 🚀 Quickstart (Nueva Máquina)
 
-Para instalar todas las herramientas y configurar SSH automáticamente:
+El proceso de inicialización clona el repositorio, solicita interactivamente tu identidad de Git (`user.name`, `user.email`) y detecta tu clave SSH (`id_ed25519.pub`) para firma de commits.
 
-```sh
-~/.local/share/chezmoi/scripts/bootstrap.sh
-```
-
-O si estás en el directorio del repo:
-
-```sh
-cd ~/.local/share/chezmoi && ./scripts/bootstrap.sh
-```
-
-El script es **interactivo e idempotente** — podés correrlo de nuevo si algo falla.
-
-### Qué hace bootstrap.sh
-
-| Fase | Qué hace |
-|------|----------|
-| 1 | Instala Homebrew si no está, ejecuta `brew bundle` con el Brewfile |
-| 2 | Configura `~/.gitconfig.local` con nombre, email y signing key |
-| 3 | Cambia el shell a Fish (`chsh`) |
-| 4 | Detecta/importa/genera claves SSH (incluye WSL → Windows) |
-| 5 | Autentica `gh` CLI |
-| 6 | Cambia remote del repo de HTTPS a SSH |
-
-### Detalles por fase
-
-#### Herramientas que instala brew bundle
-
-```
-fish starship eza bat fd ripgrep fzf zoxide atuin direnv
-git-delta gh lazygit uv fnm zellij
-```
-
-#### SSH Key Detection
-
-El script busca claves privadas en este orden:
-
-1. `~/.ssh/` → si hay, pregunta si usarlas
-2. Si estás en WSL → busca en `/mnt/c/Users/<tu-user>/.ssh/` y ofrece importar
-3. Si no hay nada → ofrece generar una nueva ed25519 y agregarla a GitHub vía `gh`
-
-## Onboarding (Windows)
-
-### Prerequisitos
-
-1. **PowerShell 7** — descargalo de [https://github.com/PowerShell/PowerShell/releases](https://github.com/PowerShell/PowerShell/releases) o via `winget install Microsoft.PowerShell`
-2. Ejecutá los comandos desde PowerShell 7 (`pwsh`)
-
-### Comando único (mínimo)
+### 🪟 Windows (PowerShell 7+)
 
 ```powershell
-pwsh -c "& { iex (iwr 'https://get.chezmoi.io') } ; chezmoi init --apply https://github.com/Row0902/row.dots.git"
+pwsh -c "& { iex (iwr 'https://get.chezmoi.io') } ; chezmoi init --apply Row0902/row.dots"
 ```
 
-Esto clona el repo, te pregunta tu nombre, email y signing key de git, y aplica todas las configuraciones. `~\.gitconfig.local` se genera automáticamente con tus respuestas. Para cambiar los valores, editá `~\.config\chezmoi\chezmoi.toml`.
+> **Bootstrap opcional (Scoop + herramientas CLI):**  
+> Si querés instalar automáticamente todo el catálogo de herramientas y configurar el servicio `ssh-agent`:
+> ```powershell
+> pwsh ~/.local/share/chezmoi/scripts/bootstrap.ps1
+> ```
 
-> > **Nota**: el comando único funciona en terminales interactivas (TTY). Para entornos no-interactivos, usá el bootstrap completo (`bootstrap.ps1`).
+---
 
-### Bootstrap completo (opcional, recomendado)
+### 🐧 Linux / macOS
 
-Para instalar todas las herramientas y configurar SSH automáticamente:
-
-```powershell
-~\.local\share\chezmoi\scripts\bootstrap.ps1
+```bash
+sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply Row0902/row.dots
 ```
 
-O si estás en el directorio del repo:
+> **Bootstrap opcional (Homebrew + bundle):**  
+> Para instalar dependencias del sistema, cambiar la shell por defecto a Fish y autenticar GitHub CLI:
+> ```bash
+> ~/.local/share/chezmoi/scripts/bootstrap.sh
+> ```
 
-```powershell
-.\scripts\bootstrap.ps1
+---
+
+## 🎨 Anatomía del Prompt (Starship)
+
+El prompt utiliza un esquema *Powerline Pill* de dos líneas con paleta Tokyo Night, glifos Nerd Fonts y adaptación contextual del sistema operativo:
+
+```text
+[ 󰖳 ]  [ ~/workspaces/apa7 ]  [  main ]  [ 󱃾 loaded  󱔎 3.12 ] ───────── [ ⏱ 1.2s ] [  19:45 ]
+❯ 
 ```
 
-El script es **interactivo e idempotente** — podés correrlo de nuevo si algo falla.
+- **Píldora 1 (OS):** Glifo adaptativo según el entorno (`󰖳` Windows, `` Arch, `` Fedora, `` Ubuntu/Debian, `` macOS).
+- **Píldora 2 (Directorio):** Truncado a 3 niveles con iconos semánticos para carpetas conocidas (`Documents`, `Downloads`, etc.).
+- **Píldora 3 (Git):** Rama activa (``) e indicador de estado adelantado/retrasado (`ahead/behind`).
+- **Píldora 4 (Runtimes):** Se activan **únicamente** si el proyecto actual los utiliza:
+  - 🥟 Bun •  Node.js • 󱔎 Python (con venv activo) • 󱘗 Rust •  Go • 󱃾 direnv
+- **Alineación derecha:** Tiempo de ejecución del comando (si excede 1s) y reloj digital.
+- **Línea de comando:** Carácter `❯` en azul (`#769ff0`), con cambio automático a rojo (`#f7768e`) si el último comando terminó con error.
 
-### Qué hace bootstrap.ps1
+---
 
-| Fase | Qué hace |
-|------|----------|
-| 1 | Instala Scoop si no está, instala todas las tools vía `scoop install` |
-| 2 | Configura `~/.gitconfig.local` con nombre, email y signing key |
-| 3 | Instala Fish via Scoop (no hay `chsh` en Windows; configurá Windows Terminal manualmente) |
-| 4 | Detecta/genera claves SSH, configura `ssh-agent` como servicio de Windows |
-| 5 | Autentica `gh` CLI |
-| 6 | Cambia remote del repo de HTTPS a SSH |
+## 🛠️ Flujo de Trabajo Diario
 
-### Herramientas que instala
+Chezmoi opera como una capa intermedia entre tu repositorio local y el sistema de archivos:
 
-```
-fish starship eza bat fd ripgrep fzf zoxide atuin direnv
-delta gh lazygit uv fnm zellij
-```
+| Acción | Comando | Descripción |
+| :--- | :--- | :--- |
+| **Auditar diferencias** | `chezmoi diff` | Compara el estado deseado contra tus archivos actuales sin tocar nada |
+| **Aplicar cambios** | `chezmoi apply` | Sincroniza las plantillas y aplica los archivos en tu `$HOME` |
+| **Editar configuración** | `chezmoi edit ~/.gitconfig` | Abre la plantilla fuente (`.tmpl`) en tu editor preferido |
+| **Actualizar desde GitHub** | `chezmoi update` | Hace `git pull` de `row.dots` y aplica las actualizaciones |
+| **Ver estado** | `chezmoi status` | Lista los archivos gestionados que difieren del repositorio |
 
-Todas se instalan via **Scoop**, sin necesidad de permisos de administrador.
+---
 
-## Lo que incluye
+## 🔒 Identidad Local y Seguridad
 
-| Archivo | Qué configura |
-|---------|---------------|
-| `~/.config/fish/config.fish` | PATH, historial, greeting |
-| `~/.config/fish/conf.d/*.fish` | Aliases/abbr de herramientas |
-| `~/.config/fish/functions/*.fish` | Funciones útiles (mkcd, extract, fkill, ports, etc.) |
-| `~/.config/starship.toml` | Prompt two-line con os, direnv, git, status |
-| `~/.gitconfig` | Git config con delta, zdiff3, histogram, aliases |
-| `~/.gitconfig.local` | Identidad local (name, email, signing key) — generado por template |
-| `~/.config/direnv/direnv.toml` | Config de direnv (log, strict mode) |
-| `~/.config/direnv/direnvrc` | Layout functions (uv, venv, virtualenv) |
-| `Brewfile` | Catálogo de tools para brew bundle |
-| `scripts/bootstrap.sh` | Script interactivo de bootstrap completo |
+Para evitar exponer información privada en repositorios públicos:
 
-## Personalización local
+1. **Configuración local (`~/.gitconfig.local`):**  
+   Este archivo es generado automáticamente en cada máquina y **no está trackeado en el repositorio**. Contiene tu nombre, correo y firma SSH:
+   ```ini
+   [user]
+       name = Rowell Urbaez Reyes
+       email = 167712855+Row0902@users.noreply.github.com
+       signingkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..."
+   ```
 
-No modifiques los archivos directamente en `~/.config/` — se sobrescriben en el próximo `chezmoi apply`.
+2. **Ajustes de máquina (`~/.config/chezmoi/chezmoi.toml`):**  
+   Almacena las variables específicas de cada host para la evaluación de templates.
 
-En cambio:
+---
 
-```sh
-# Identidad git (name, email, signing key) — NO trackeado en el repo
-chezmoi apply ~/.gitconfig.local
+## 📂 Estructura del Repositorio
 
-# Config local adicional
-vim ~/.gitconfig.local
-```
-
-```sh
-# Editar archivos en el source
-chezmoi edit ~/.config/fish/conf.d/mis-aliases.fish
-
-# O directamente en el repo
-cd ~/.local/share/chezmoi
-$EDITOR dot_config/fish/conf.d/mis-aliases.fish
-chezmoi re-add ~/.config/fish/conf.d/mis-aliases.fish
-```
-
-## Migración: identidad git (usuarios existentes)
-
-Si antes configuraste tu identidad editando `.chezmoidata.toml`, tenés dos opciones:
-
-### Opción A: Re-ejecutar `chezmoi init` (recomendado)
-
-```sh
-chezmoi init
+```text
+row.dots/
+├── .chezmoiignore          # Reglas de exclusión por OS (evita scripts/archivos cruzados)
+├── .chezmoidata.toml       # Variables globales de entorno y herramientas
+├── .chezmoi.toml.tmpl      # Asistente de configuración para primer inicio
+├── dot_config/
+│   ├── direnv/             # Configuración y layouts para Python uv/venv
+│   ├── fish/               # Configuración, alias y funciones de Fish shell
+│   ├── nushell/            # Autoloads de Starship y direnv para Nushell
+│   └── starship.toml.tmpl  # Plantilla del prompt con badge dinámico de OS
+├── dot_gitconfig.tmpl      # Configuración de Git (Delta, rebase, SSH signing, credential manager)
+├── dot_gitconfig.local.tmpl# Detección automática de identidad y claves ed25519/rsa
+├── dot_gitignore_global    # Reglas globales de exclusión (Zone.Identifier, etc.)
+└── scripts/
+    ├── bootstrap.ps1       # Aprovisionamiento interactivo para Windows (Scoop)
+    └── bootstrap.sh        # Aprovisionamiento interactivo para Linux/macOS (Brew)
 ```
 
-Te va a preguntar tu nombre, email y signing key. Los valores se guardan en `~/.config/chezmoi/chezmoi.toml` y toman precedencia sobre `.chezmoidata.toml`.
+---
 
-Después, eliminá las 3 líneas de identidad de tu `.chezmoidata.toml` local:
-
-```sh
-# Verificar qué valores tenés
-chezmoi data | grep -A3 git
-
-# Aplicar cambios
-chezmoi apply
-```
-
-### Opción B: Copiar valores manualmente
-
-Editá `~/.config/chezmoi/chezmoi.toml` (crealo si no existe):
-
-```toml
-[data.git]
-    user_name = "Tu nombre"
-    user_email = "tu@email.com"
-    signingkey = "TU_KEY"
-```
-
-### Si no hacés nada
-
-Tu próximo `chezmoi update` va a traer un `.chezmoidata.toml` sin las 3 líneas de identidad. Si tenías valores locales, git te va a pedir que resuelvas el conflicto. Aceptá la versión upstream (sin las líneas) y seguí la Opción A o B.
-
-## Mantenimiento
-
-```sh
-# Actualizar desde GitHub y ver cambios
-chezmoi update -v
-
-# Ver diff entre source y target
-chezmoi diff
-
-# Aplicar cambios
-chezmoi apply -v
-
-# Agregar un nuevo archivo al managed
-chezmoi add ~/.config/nueva-tool/config.toml
-```
+<div align="center">
+  <sub>Construido con precisión para desarrollo diario. Licencia MIT.</sub>
+</div>

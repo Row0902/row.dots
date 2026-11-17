@@ -19,9 +19,9 @@ if (Get-Command starship -ErrorAction SilentlyContinue) {
     (&starship init powershell) | Invoke-Expression
 }
 
-# zoxide — smarter cd (z, zi)
+# zoxide — cd inteligente: reemplaza cd por la búsqueda de zoxide (z / zi pasan a ser cd / cdi)
 if (Get-Command zoxide -ErrorAction SilentlyContinue) {
-    (zoxide init powershell | Out-String) | Invoke-Expression
+    (zoxide init powershell --cmd cd | Out-String) | Invoke-Expression
 }
 
 # fzf keybindings: fzf has no `--powershell` integration (verified: "unknown

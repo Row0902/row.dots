@@ -14,7 +14,6 @@ brew "fzf"
 brew "zoxide"
 brew "atuin"
 brew "direnv"
-brew "less"
 brew "neovim"
 
 # ── Git ────────────────────────────────────────────────────────────────
@@ -28,11 +27,6 @@ brew "fnm"
 tap "oven-sh/bun"
 brew "bun"
 brew "rustup"
-
-# ── Terminal ───────────────────────────────────────────────────────────
-brew "zellij"
-brew "tmux"
-
 
 # AI
 tap "Gentleman-Programming/homebrew-tap"

@@ -12,10 +12,15 @@ exit 0
 $ErrorActionPreference = "Continue"
 
 # CLI portables: Scoop
+# atuin, fnm and neovim are intentionally absent from this list: every hook
+# that initialises them lives in dot_config/fish/**, which .chezmoiignore
+# excludes on Windows, so installing them there buys nothing. Node is managed
+# outside these lists on this machine, and git falls back to VS Code for the
+# editor. They stay in the Brewfile, where fish does consume them.
 $scoopPackages = @(
     "starship", "eza", "bat", "fd", "ripgrep",
-    "fzf", "zoxide", "atuin", "delta", "gh",
-    "lazygit", "uv", "fnm", "neovim", "direnv", "nu"
+    "fzf", "zoxide", "delta", "gh",
+    "lazygit", "uv", "direnv", "nu"
 )
 
 # Integración con el sistema: winget

@@ -2,10 +2,6 @@
 .config/fish/**
 {{ end }}
 
-{{ if ne .chezmoi.os "windows" }}
-Documents/PowerShell/**
-{{ end }}
-
 # Auto-generado por Fish — no trackear
 .config/fish/fish_variables
 

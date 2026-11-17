@@ -1,29 +1,20 @@
 # chezmoi: run_once_before_install-packages.ps1.tmpl
 # Provisioner de Windows.
 #
-# Scoop es la vía por defecto para las CLI portables. winget queda reservado
-# para lo que integra con el sistema operativo: Git for Windows (trae el
-# Credential Manager y el OpenSSH que usa dot_gitconfig.tmpl) y PowerShell 7
-# como MSI con entrada en el PATH de sistema.
+# The order is the same on both platforms, and it is deliberate:
+#   1. install the package manager
+#   2. update the manager and its catalogues  <- before installing anything
+#   3. declare buckets and apps               <- scoopfile.json / Brewfile
+#   4. install what no portable manager ships (system integration, via winget)
+#   5. clean up old versions and the download cache
+#
+# The app list is NOT kept here: it lives in scoopfile.json, which is the format
+# `scoop export` produces, so the file round-trips and the list has one owner.
 {{ if ne .chezmoi.os "windows" -}}
 # Not on Windows — skip
 exit 0
 {{ end -}}
 $ErrorActionPreference = "Continue"
-
-# CLIs: Scoop
-# atuin, fnm and neovim are intentionally absent from this list: every hook
-# that initialises them lives in dot_config/fish/**, which .chezmoiignore
-# excludes on Windows, so installing them there buys nothing. They stay in the
-# Brewfile, where fish does consume them.
-# gh, uv, node, pnpm, go and bun are not here either: mise owns those and
-# installs them from dot_config/mise/config.toml via
-# run_once_after_install-runtimes.ps1.tmpl.
-$scoopPackages = @(
-    "starship", "eza", "bat", "fd", "ripgrep",
-    "fzf", "zoxide", "delta",
-    "lazygit", "direnv", "nu", "mise"
-)
 
 # Integración con el sistema: winget
 $wingetPackages = @(
@@ -33,34 +24,36 @@ $wingetPackages = @(
     "Rustlang.Rustup"
 )
 
-# ── Scoop ──────────────────────────────────────────────────────────────
+# ── 1. Scoop ──────────────────────────────────────────────────────────
 if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
     Write-Host "Installing Scoop..."
     Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force
     Invoke-RestMethod -Uri "https://get.scoop.sh" | Invoke-Expression
 
     # Scoop's installer appends its shim dir to the *user* PATH, which this
-    # already-running process does not observe. Refresh it here or every
+    # already-running process does not observe. Refresh PATH here or every
     # Get-Command below misses the tool it just installed.
     $env:PATH = [Environment]::GetEnvironmentVariable("Path", "User") + ";" +
                 [Environment]::GetEnvironmentVariable("Path", "Machine")
 }
 
+# ── 2 and 3. Update, then apply the declarative file ──────────────────
 if (Get-Command scoop -ErrorAction SilentlyContinue) {
-    scoop bucket add extras 2>$null | Out-Null
-    foreach ($pkg in $scoopPackages) {
-        if (Get-Command $pkg -ErrorAction SilentlyContinue) {
-            Write-Host "$pkg already on PATH, skipping"
-            continue
-        }
-        Write-Host "Installing $pkg via scoop..."
-        scoop install $pkg 2>&1 | Out-Null
+    Write-Host "Updating Scoop and its buckets before installing anything..."
+    scoop update
+
+    $scoopfile = Join-Path "{{ .chezmoi.sourceDir }}" "scoopfile.json"
+    if (Test-Path $scoopfile) {
+        Write-Host "Importing buckets and apps from scoopfile.json..."
+        scoop import $scoopfile
+    } else {
+        Write-Warning "scoopfile.json not found at $scoopfile"
     }
 } else {
     Write-Warning "Scoop unavailable — portable tools skipped. Re-run this machine's apply or scripts/bootstrap.ps1."
 }
 
-# ── winget (system integration only) ──────────────────────────────────
+# ── 4. winget: lo que necesita integración con Windows ────────────────
 if (Get-Command winget -ErrorAction SilentlyContinue) {
     foreach ($pkg in $wingetPackages) {
         Write-Host "Installing $pkg via winget..."
@@ -68,5 +61,14 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
         & winget install --id $pkg --exact --silent --accept-package-agreements --accept-source-agreements
     }
 } else {
-    Write-Warning "winget not found — Git and PowerShell skipped."
+    Write-Warning "winget not found — Git, PowerShell and rustup skipped."
+}
+
+# ── 5. Cleanup ────────────────────────────────────────────────────────
+# Old app versions pile up in ~\scoop\apps and every installer stays cached in
+# ~\scoop\cache. Cleanup runs last so it never deletes something still needed.
+if (Get-Command scoop -ErrorAction SilentlyContinue) {
+    Write-Host "Removing old versions and the download cache..."
+    scoop cleanup -a
+    scoop cache rm -a
 }

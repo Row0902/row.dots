@@ -19,6 +19,7 @@ install-packages.ps1
 # Repo-only files: viven en git, no son dotfiles y no deben aterrizar en $HOME.
 README.md
 Brewfile
+scoopfile.json
 LICENSE
 odd/**
 scripts/**

@@ -3,10 +3,12 @@
 #
 # The order is the same on both platforms, and it is deliberate:
 #   1. install the package manager
-#   2. update the manager and its catalogues  <- before installing anything
-#   3. declare buckets and apps               <- scoopfile.json / Brewfile
-#   4. install what no portable manager ships (system integration, via winget)
-#   5. clean up old versions and the download cache
+#   2. configure it                         <- scoop knobs, idempotent
+#   3. update the manager and its catalogues <- before installing anything
+#   4. declare buckets and apps              <- scoopfile.json / Brewfile
+#   4b. enable the SQLite cache               <- after the import, see step 4b
+#   5. install what no portable manager ships (system integration, via winget)
+#   6. clean up old versions and the download cache
 #
 # The app list is NOT kept here: it lives in scoopfile.json, which is the format
 # `scoop export` produces, so the file round-trips and the list has one owner.
@@ -15,6 +17,40 @@
 exit 0
 {{ end -}}
 $ErrorActionPreference = "Continue"
+
+# Reads and writes Scoop's own config file, idempotently. Scoop resolves that
+# path as $env:XDG_CONFIG_HOME first and %USERPROFILE%\.config otherwise
+# (lib/core.ps1), so the guard mirrors that instead of hardcoding one of them:
+# a hardcoded path would read the wrong file on a machine with a different XDG.
+function Get-ScoopConfigPath {
+    $configHome = if ($env:XDG_CONFIG_HOME) { $env:XDG_CONFIG_HOME } else { Join-Path $env:USERPROFILE ".config" }
+    return Join-Path $configHome "scoop\config.json"
+}
+
+function Set-ScoopSetting([string]$Name, [string]$Want) {
+    $configPath = Get-ScoopConfigPath
+    $config = $null
+    if (Test-Path $configPath) {
+        $config = Get-Content $configPath -Raw | ConvertFrom-Json
+    }
+    $current = $null
+    if ($config -and $config.PSObject.Properties[$Name]) {
+        $current = $config.PSObject.Properties[$Name].Value
+    }
+    if ($null -ne $current -and "$current".ToLower() -eq $Want) {
+        Write-Host "scoop config $Name already $Want"
+        return
+    }
+    scoop config $Name $Want
+    # $LASTEXITCODE is only set by native commands; comparing it against 0 without
+    # a null check warns when scoop is not a native binary (a shim wrapper, a
+    # function in a test harness).
+    if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+        Write-Warning "scoop config $Name failed (exit $LASTEXITCODE); the next apply retries it"
+        return
+    }
+    Write-Host "scoop config $Name set to $Want"
+}
 
 # Integración con el sistema: winget
 $wingetPackages = @(
@@ -37,7 +73,42 @@ if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
                 [Environment]::GetEnvironmentVariable("Path", "Machine")
 }
 
-# ── 2 and 3. Update, then apply the declarative file ──────────────────
+# ── 2. Scoop configuration ───────────────────────────────────
+# The knobs that shape daily use. None of them changes what gets installed and
+# each one is written only when it differs, so re-running the provisioner never
+# touches the file. `use_sqlite_cache` is deliberately NOT here: enabling it
+# makes Scoop download a SQLite library on the next bucket operation, and that
+# download sits inside `add_bucket` without a catch — a network failure there
+# would abort `scoop import` and skip the app list. It is applied in step 4b,
+# once the import is already done.
+#
+# Keys come from `scoop help config` and from Scoop's own source, not from
+# memory: Scoop reads `aria2-warning-enabled` (no `c`). A stale
+# `aria2c-warning-enabled` from an older install is inert — nothing in Scoop
+# references it — so it is removed below, otherwise the warning never goes away.
+if (Get-Command scoop -ErrorAction SilentlyContinue) {
+    $legacyKey = (Get-ScoopConfigPath)
+    if (Test-Path $legacyKey) {
+        $legacyConfig = Get-Content $legacyKey -Raw | ConvertFrom-Json
+        if ($legacyConfig -and $legacyConfig.PSObject.Properties["aria2c-warning-enabled"]) {
+            scoop config rm aria2c-warning-enabled
+            Write-Host "scoop config removed inert legacy key aria2c-warning-enabled"
+        }
+    }
+
+    # Sync-Scoop (Scoop's own repo update) refuses to run on local edits unless
+    # this is on. It does NOT affect bucket updates; this is the only key whose
+    # scope is easy to misread.
+    Set-ScoopSetting "autostash_on_conflict" "true"
+    # `scoop cat` and manifest review go through bat (installed by scoopfile.json).
+    Set-ScoopSetting "cat_style" "plain"
+    # Drop the commit log from `scoop update` output.
+    Set-ScoopSetting "show_update_log" "false"
+    # The "Aria2 is enabled" banner printed on every install and update.
+    Set-ScoopSetting "aria2-warning-enabled" "false"
+}
+
+# ── 3 and 4. Update, then apply the declarative file ──────────────────
 if (Get-Command scoop -ErrorAction SilentlyContinue) {
     Write-Host "Updating Scoop and its buckets before installing anything..."
     scoop update
@@ -53,7 +124,16 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
     Write-Warning "Scoop unavailable — portable tools skipped. Re-run this machine's apply or scripts/bootstrap.ps1."
 }
 
-# ── 4. winget: lo que necesita integración con Windows ────────────────
+# ── 4b. SQLite cache for search/shim ──────────────────────────────────
+# Applied only after the app list is installed: turning it on triggers a
+# one-time download of the SQLite libraries, and doing that before the import
+# would put a network dependency in the middle of it. A failure here costs
+# nothing but a slower `scoop search`, and the next apply retries.
+if (Get-Command scoop -ErrorAction SilentlyContinue) {
+    Set-ScoopSetting "use_sqlite_cache" "true"
+}
+
+# ── 5. winget: lo que necesita integración con Windows ────────────────
 if (Get-Command winget -ErrorAction SilentlyContinue) {
     foreach ($pkg in $wingetPackages) {
         Write-Host "Installing $pkg via winget..."
@@ -64,7 +144,7 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
     Write-Warning "winget not found — Git, PowerShell and rustup skipped."
 }
 
-# ── 5. Cleanup ────────────────────────────────────────────────────────
+# ── 6. Cleanup ────────────────────────────────────────────────────────
 # Old app versions pile up in ~\scoop\apps and every installer stays cached in
 # ~\scoop\cache. Cleanup runs last so it never deletes something still needed.
 if (Get-Command scoop -ErrorAction SilentlyContinue) {

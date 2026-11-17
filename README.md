@@ -24,8 +24,8 @@ Optimizado para **Windows 11** y **Linux**, gestionado declarativamente con [che
 | **Git & Diff** | [Delta](https://github.com/dandavison/delta) | Syntax highlighting, vistas side-by-side y firma criptográfica SSH |
 | **Entornos** | [direnv](https://direnv.net/) | Carga automática de variables de entorno y layouts para Python (`uv`, `venv`) |
 | **Productividad** | [zoxide](https://github.com/ajeetdsouza/zoxide), [eza](https://eza.rocks/), [bat](https://github.com/sharkdp/bat), [fzf](https://github.com/junegunn/fzf) | Reemplazos modernos para `cd`, `ls`, `cat` y búsqueda interactiva |
-| **Paquetes** | [Scoop](https://scoop.sh/) / [Homebrew](https://brew.sh/) | Instalación sin privilegios en Windows y Linux; winget queda solo para lo que integra con el sistema (Git, PowerShell, rustup) |
-| **Runtimes** | [mise](https://mise.jdx.dev/) / [rustup](https://rustup.rs/) | mise posee node, pnpm, go, uv, gh y bun desde un solo archivo; rustup posee cargo y rustc |
+| **Paquetes** | [Scoop](https://scoop.sh/) / [Homebrew](https://brew.sh/) | Instalación sin privilegios en Windows y Linux; winget queda solo para lo que integra con el sistema (Git, PowerShell, rustup). La config de Scoop la aplica el provisioner, no a mano |
+| **Runtimes** | [mise](https://mise.jdx.dev/) / [rustup](https://rustup.rs/) | mise posee node, pnpm, go, uv, gh y bun desde un solo archivo; rustup posee cargo y rustc. **`mise self-update` no se usa**: mise lo instaló Scoop, así que se actualiza con `scoop update mise` |
 
 ---
 
@@ -39,6 +39,8 @@ Reglas que el repo cumple hoy, para no reintroducir los mismos bugs:
 - Las herramientas que pueden faltar (`delta`, `code`, `nvim`) están gateadas con `lookPath`.
 - Windows Terminal se trackea con `"commandline": "nu.exe"` (resuelve por PATH vía el shim de Scoop) en lugar de la ruta absoluta `C:/Users/<usuario>/scoop/apps/nu/current/nu.exe`, y `AppData/**` se ignora fuera de Windows.
 - `run_once_after_set-xdg` fija además `GH_CONFIG_DIR` en `%APPDATA%\GitHub CLI`: `gh` prefiere `$XDG_CONFIG_HOME` si existe y ahí no tiene sus credenciales, así que sin esa variable responde «not logged in» con XDG activo. Se resuelve por variable de usuario y no por perfil, para cubrir PowerShell, nushell y Git Bash a la vez.
+- La config de Scoop vive en el provisioner, nunca en `~/.config/scoop/config.json` editado a mano (Scoop reescribe ese archivo en cada `update`): `autostash_on_conflict` (que solo afecta el update del repo de Scoop, no los buckets), `cat_style plain`, `show_update_log false` y `aria2-warning-enabled false`, todos idempotentes. La clave que Scoop lee es `aria2-warning-enabled` **sin `c`**; `aria2c-warning-enabled` es inerte y el script la borra. `use_sqlite_cache` se activa recién después del `scoop import`, porque encenderlo dispara una descarga de SQLite dentro de `add_bucket` y una caída de red ahí abortaría la instalación de las apps.
+- Los runtimes de mise se actualizan con `mise up` (respeta `minimum_release_age`, 24 h por defecto), y mise en sí con `scoop update mise`, porque Scoop es su dueño en Windows.
 - Aplica exactamente un provisioner por OS.
 - `.chezmoiversion` fija la versión mínima de chezmoi (2.74.0).
 

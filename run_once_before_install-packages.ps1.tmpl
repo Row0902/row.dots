@@ -5,13 +5,18 @@
 #   1. install the package manager
 #   2. configure it                         <- scoop knobs, idempotent
 #   3. update the manager and its catalogues <- before installing anything
-#   4. declare buckets and apps              <- scoopfile.json / Brewfile
+#   4. declare buckets and apps              <- scoopfile*.json / Brewfile
 #   4b. enable the SQLite cache               <- after the import, see step 4b
 #   5. install what no portable manager ships (system integration, via winget)
 #   6. clean up old versions and the download cache
 #
-# The app list is NOT kept here: it lives in scoopfile.json, which is the format
-# `scoop export` produces, so the file round-trips and the list has one owner.
+# The app list is NOT kept here: it lives in scoopfile.json and
+# scoopfile.apps.json, the format `scoop export` produces, so both round-trip and
+# each list has one owner:
+#   scoopfile.json       tools every machine needs (dev toolchain)
+#   scoopfile.apps.json  desktop applications this user wants on his machines
+# `scoop import` is additive and idempotent, so applying both files in order is
+# safe: whatever is already installed is skipped.
 {{ if ne .chezmoi.os "windows" -}}
 # Not on Windows — skip
 exit 0
@@ -113,12 +118,16 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
     Write-Host "Updating Scoop and its buckets before installing anything..."
     scoop update
 
-    $scoopfile = Join-Path "{{ .chezmoi.sourceDir }}" "scoopfile.json"
-    if (Test-Path $scoopfile) {
-        Write-Host "Importing buckets and apps from scoopfile.json..."
+    $scoopfiles = @("scoopfile.json", "scoopfile.apps.json")
+    foreach ($name in $scoopfiles) {
+        $scoopfile = Join-Path "{{ .chezmoi.sourceDir }}" $name
+        if (-not (Test-Path $scoopfile)) {
+            # The apps file is optional: a machine can run with the toolchain only.
+            Write-Warning "$name not found at $scoopfile — skipped"
+            continue
+        }
+        Write-Host "Importing buckets and apps from $name..."
         scoop import $scoopfile
-    } else {
-        Write-Warning "scoopfile.json not found at $scoopfile"
     }
 } else {
     Write-Warning "Scoop unavailable — portable tools skipped. Re-run this machine's apply or scripts/bootstrap.ps1."

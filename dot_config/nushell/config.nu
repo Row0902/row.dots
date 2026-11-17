@@ -1,21 +1,10 @@
 # config.nu
 #
-# Installed by:
-# version = "0.113.1"
+# Instalado por chezmoi (row.dots). Se sobreescribe: editá la fuente en
+# dot_config/nushell/config.nu, no este archivo.
 #
-# This file is used to override default Nushell settings, define
-# (or import) custom commands, or run any other startup tasks.
-# See https://www.nushell.sh/book/configuration.html
-#
-# Nushell sets "sensible defaults" for most configuration settings, 
-# so your `config.nu` only needs to override these defaults if desired.
-#
-# You can open this file in your default editor using:
-#     config nu
-#
-# You can also pretty-print and page through the documentation for configuration
-# options using:
-#     config nu --doc | nu-highlight | less -R
+# Portabilidad: en Windows `$env.USER` y `$env.HOME` no siempre existen,
+# por eso el usuario sale de USER/USERNAME y el home de $nu.home-dir.
 
 $env.config = {
 
@@ -23,9 +12,9 @@ $env.config = {
 
     hooks: {
         pre_prompt: [{ ||
-            let base_name = $env.USER
+            let base_name = ($env.USER? | default ($env.USERNAME? | default "user"))
             let current_dir = (pwd | path basename)
-            let title = if (($env.PWD | path expand) == ($env.HOME | path expand)) {
+            let title = if (($env.PWD | path expand) == $nu.home-dir) {
                 $base_name
             } else {
                 $"($base_name):($current_dir)"

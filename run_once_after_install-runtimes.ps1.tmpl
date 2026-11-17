@@ -13,17 +13,23 @@ if (-not (Get-Command mise -ErrorAction SilentlyContinue)) {
     exit 0
 }
 
-# mise writes real shims here. Without this entry the tools it manages only
-# exist inside a shell that ran `mise activate`.
+# mise writes real shims here. They must come FIRST among the package managers:
+# mise is the declared owner of node, pnpm, go, uv, gh and bun, and a Scoop
+# package that ships one of them later would shadow it silently — which is
+# exactly what happened with gh and uv before. Idempotent: the variable is
+# rewritten only when the entry is not already at the front.
 $shims = Join-Path $env:LOCALAPPDATA "mise\shims"
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+$entries = @($userPath -split ";" | Where-Object { $_ -and $_ -ne $shims })
+$newUserPath = (@($shims) + $entries) -join ";"
 
-if ($userPath -notlike "*$shims*") {
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$shims", "User")
-    Write-Host "Added $shims to the user PATH"
+if ($newUserPath -ne $userPath) {
+    [Environment]::SetEnvironmentVariable("Path", $newUserPath, "User")
+    Write-Host "mise shims moved to the front of the user PATH"
 }
-if ($env:PATH -notlike "*$shims*") {
-    $env:PATH = "$env:PATH;$shims"
+if ($env:PATH -notlike "$shims*") {
+    $rest = @($env:PATH -split ";" | Where-Object { $_ -and $_ -ne $shims }) -join ";"
+    $env:PATH = "$shims;$rest"
 }
 
 Write-Host "Installing runtimes from mise.toml..."

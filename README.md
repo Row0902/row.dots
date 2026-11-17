@@ -24,7 +24,7 @@ Optimizado para **Windows 11** y **Linux**, gestionado declarativamente con [che
 | **Git & Diff** | [Delta](https://github.com/dandavison/delta) | Syntax highlighting, vistas side-by-side y firma criptográfica SSH |
 | **Entornos** | [direnv](https://direnv.net/) | Carga automática de variables de entorno y layouts para Python (`uv`, `venv`) |
 | **Productividad** | [zoxide](https://github.com/ajeetdsouza/zoxide), [eza](https://eza.rocks/), [bat](https://github.com/sharkdp/bat), [fzf](https://github.com/junegunn/fzf) | Reemplazos modernos para `cd`, `ls`, `cat` y búsqueda interactiva |
-| **Paquetes** | [winget](https://learn.microsoft.com/windows/package-manager/) / [Homebrew](https://brew.sh/) | Instalación sin privilegios de administrador en Windows y Linux (Scoop solo como vía opcional) |
+| **Paquetes** | [Scoop](https://scoop.sh/) / [Homebrew](https://brew.sh/) | Instalación sin privilegios en Windows y Linux; winget queda solo para lo que integra con el sistema (Git, PowerShell) |
 
 ---
 
@@ -51,8 +51,8 @@ El proceso de inicialización clona el repositorio, solicita interactivamente tu
 pwsh -c "& { iex (iwr 'https://get.chezmoi.io') } ; chezmoi init --apply Row0902/row.dots"
 ```
 
-> **Aprovisionamiento automático (winget):**
-> `chezmoi apply` ejecuta `run_once_before_install-packages.ps1`, el único provisioner de Windows: instala con winget Git, PowerShell, Neovim, starship, eza, ripgrep, fzf, bat, delta, direnv y nushell.
+> **Aprovisionamiento automático (Scoop + winget):**
+> `chezmoi apply` ejecuta `run_once_before_install-packages.ps1`, el único provisioner de Windows: instala Scoop y con él las CLI portables (starship, eza, bat, fd, ripgrep, fzf, zoxide, atuin, delta, gh, lazygit, uv, fnm, neovim, direnv, nu). winget queda solo para Git for Windows y PowerShell 7, que necesitan integración con el sistema.
 >
 > **Bootstrap opcional y manual (Scoop + ssh-agent):**  
 > Si preferís el catálogo de Scoop y querés configurar el servicio `ssh-agent`:
@@ -137,9 +137,7 @@ row.dots/
 ├── .chezmoiversion                      # Versión mínima de chezmoi (2.74.0)
 ├── .chezmoitemplates/                   # Partials compartidos entre templates
 │   ├── brew-path.tmpl                   # PATH de Homebrew resuelto desde .chezmoidata.toml
-│   ├── git-identity.tmpl                # Identidad de Git
-│   ├── git-signing-key.tmpl             # Clave de firma SSH (fuente única)
-│   └── os-path.tmpl                     # Rutas por sistema operativo
+│   └── git-signing-key.tmpl             # Clave de firma SSH (fuente única)
 ├── dot_config/
 │   ├── direnv/                          # Configuración y layouts para Python uv/venv
 │   ├── fish/                            # Solo Linux (ver nota de plataformas)
@@ -147,13 +145,16 @@ row.dots/
 │   │   ├── conf.d/                      # Snippets, incluido 00-path.fish.tmpl
 │   │   ├── functions/                   # Funciones propias (cdl, mkcd, extract…)
 │   │   └── completions/                 # Completions propias
-│   ├── nushell/                         # config.nu + autoloads de Starship y direnv
+│   ├── nushell/                         # config.nu + autoloads (starship, direnv, zoxide)
+│   ├── powershell/                      # Cuerpo del perfil de PowerShell 7
 │   └── starship.toml.tmpl               # Prompt con badge dinámico de OS
 ├── dot_gitconfig.tmpl                   # Git: Delta, rebase, firma SSH, credential manager
 ├── dot_gitconfig.local.tmpl             # Identidad y clave detectadas en cada máquina
-├── dot_gitignore_global.tmpl            # Exclusión global (Zone.Identifier, etc.)
+├── dot_gitignore_global                 # Exclusión global (Zone.Identifier, etc.)
 ├── run_once_before_install-homebrew.sh.tmpl   # Provisioner Linux/macOS (Homebrew + Brewfile)
-├── run_once_before_install-packages.ps1.tmpl  # Provisioner Windows (winget)
+├── run_once_before_install-packages.ps1.tmpl  # Provisioner Windows (Scoop + winget)
+├── run_once_after_set-xdg.ps1.tmpl             # Windows: XDG_CONFIG_HOME para nushell
+├── run_onchange_after_copy-powershell-profiles.ps1.tmpl  # Copia el perfil a Documents
 ├── Brewfile                             # Catálogo de paquetes de Homebrew
 ├── LICENSE                              # MIT
 ├── README.md
@@ -163,7 +164,7 @@ row.dots/
     └── bootstrap.sh                     # Bootstrap interactivo Linux/macOS
 ```
 
-> **Nota de plataformas:** `.chezmoiignore` excluye `dot_config/fish/**` en cualquier SO que no sea Linux, así que en Windows solo aplican nushell, direnv, starship y la configuración de Git.
+> **Nota de plataformas:** `.chezmoiignore` excluye `dot_config/fish/**` en cualquier SO que no sea Linux. En Windows aplican nushell, direnv, starship, la configuración de Git y el perfil de PowerShell; nushell lee `~/.config/nushell` porque `run_once_after_set-xdg` fija `XDG_CONFIG_HOME` en el usuario (su data-dir sigue en `%APPDATA%`).
 
 ---
 

@@ -1,0 +1,34 @@
+# chezmoi: run_onchange_after_copy-powershell-profiles.ps1.tmpl
+# Windows only.
+#
+# The real PowerShell profile lives inside Documents, which on this machine is
+# redirected to another drive. chezmoi targets are relative to $HOME and it
+# refuses to write outside the destination dir, so the profile body is managed
+# at dot_config/powershell/profile.ps1 and copied here.
+#
+# The hash below changes whenever the profile body changes, which is what makes
+# run_onchange re-run this script instead of only once.
+#
+# body-sha256: {{ include (joinPath .chezmoi.sourceDir "dot_config/powershell/profile.ps1") | sha256sum }}
+{{ if ne .chezmoi.os "windows" -}}
+# Not on Windows — skip
+exit 0
+{{ end -}}
+$source = Join-Path $env:USERPROFILE ".config\powershell\profile.ps1"
+if (-not (Test-Path $source)) {
+    Write-Warning "Managed profile not found at $source — run 'chezmoi apply' first."
+    exit 1
+}
+
+$docs = [Environment]::GetFolderPath('MyDocuments')
+
+# PowerShell 7 only. The Windows PowerShell 5.1 profile folder on this machine
+# is empty on purpose; creating one would change 5.1 behaviour silently.
+$target = Join-Path $docs "PowerShell"
+if (-not (Test-Path $target)) {
+    New-Item -ItemType Directory -Path $target -Force | Out-Null
+}
+
+$dest = Join-Path $target "Microsoft.PowerShell_profile.ps1"
+Copy-Item $source $dest -Force
+Write-Host "PowerShell 7 profile synced to $dest"

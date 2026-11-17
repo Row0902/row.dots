@@ -1,0 +1,24 @@
+# chezmoi: run_once_after_set-xdg.ps1.tmpl
+# Windows only.
+#
+# nushell (and any other XDG-aware tool) resolves its config dir from
+# XDG_CONFIG_HOME when it is set to an absolute path; otherwise nushell uses
+# %APPDATA%\nushell. Setting it here makes the managed dot_config/** targets
+# the ones that actually load, on this machine and on any other Windows box.
+#
+# The data dir ($nu.data-dir: history, plugin registry, vendor autoload) stays
+# in %APPDATA%\nushell, which is what we want: only config comes from the repo.
+{{ if ne .chezmoi.os "windows" -}}
+# Not on Windows — skip
+exit 0
+{{ end -}}
+$configHome = Join-Path $env:USERPROFILE ".config"
+$current = [Environment]::GetEnvironmentVariable("XDG_CONFIG_HOME", "User")
+
+if ($current -eq $configHome) {
+    Write-Host "XDG_CONFIG_HOME already set to $configHome"
+} else {
+    [Environment]::SetEnvironmentVariable("XDG_CONFIG_HOME", $configHome, "User")
+    Write-Host "XDG_CONFIG_HOME set to $configHome (user scope)"
+    Write-Host "Open a new terminal for it to take effect."
+}

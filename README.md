@@ -37,6 +37,7 @@ Reglas que el repo cumple hoy, para no reintroducir los mismos bugs:
 - El prefix de Homebrew se define una sola vez en `.chezmoidata.toml` y se consume vía `.chezmoitemplates/brew-path.tmpl`.
 - La clave de firma SSH se resuelve una sola vez en `.chezmoitemplates/git-signing-key.tmpl` (`id_ed25519` > `id_rsa` > `.git.signingkey` > vacío) y `commit.gpgsign` se desactiva cuando no hay clave, así una máquina nueva puede commitear igual.
 - Las herramientas que pueden faltar (`delta`, `code`, `nvim`) están gateadas con `lookPath`.
+- Windows Terminal se trackea con `"commandline": "nu.exe"` (resuelve por PATH vía el shim de Scoop) en lugar de la ruta absoluta `C:/Users/<usuario>/scoop/apps/nu/current/nu.exe`, y `AppData/**` se ignora fuera de Windows.
 - Aplica exactamente un provisioner por OS.
 - `.chezmoiversion` fija la versión mínima de chezmoi (2.74.0).
 
@@ -132,7 +133,9 @@ Para evitar exponer información privada en repositorios públicos:
 
 ```text
 row.dots/
-├── .chezmoiignore                       # Exclusiones por OS (fish solo en Linux, un provisioner por OS)
+├── .chezmoiignore                       # Exclusiones por OS (fish solo en Linux, AppData solo en Windows, un provisioner por OS)
+├── AppData/                             # Solo Windows: estado de apps empaquetadas (MSIX)
+│   └── Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json
 ├── .chezmoidata.toml                    # Datos globales: prefix de Homebrew, editor, rama por defecto
 ├── .chezmoi.toml.tmpl                   # Asistente de configuración para primer inicio
 ├── .chezmoiversion                      # Versión mínima de chezmoi (2.74.0)
@@ -167,7 +170,9 @@ row.dots/
     └── bootstrap.sh                     # Bootstrap interactivo Linux/macOS
 ```
 
-> **Nota de plataformas:** `.chezmoiignore` excluye `dot_config/fish/**` en cualquier SO que no sea Linux. En Windows aplican nushell, direnv, starship, la configuración de Git y el perfil de PowerShell; nushell lee `~/.config/nushell` porque `run_once_after_set-xdg` fija `XDG_CONFIG_HOME` en el usuario (su data-dir sigue en `%APPDATA%`).
+> **Nota de plataformas:** `.chezmoiignore` excluye `dot_config/fish/**` en cualquier SO que no sea Linux, y `AppData/**` en cualquier SO que no sea Windows. En Windows aplican nushell, direnv, starship, la configuración de Git, el perfil de PowerShell y Windows Terminal; nushell lee `~/.config/nushell` porque `run_once_after_set-xdg` fija `XDG_CONFIG_HOME` en el usuario (su data-dir sigue en `%APPDATA%`).
+
+> **Windows Terminal:** `AppData/…/LocalState/settings.json` es un target plano, no un template. El único dato de máquina que tenía era el `commandline` del perfil NuShell, con la ruta absoluta `C:\\Users\\<usuario>\\scoop\\apps\\nu\\current\\nu.exe`; quedó como `nu.exe`, que resuelve por PATH vía el shim de Scoop. Dos cuidados: (1) **cerrá WT antes de cada `chezmoi apply`**, porque WT reescribe el archivo al salir y puede revertir lo aplicado; (2) el package family `Microsoft.WindowsTerminal_8wekyb3d8bbwe` es el de la versión de Store — con WT unpackaged o Preview la ruta es otra y hay que mover el target.
 
 ---
 

@@ -2,6 +2,13 @@
 .config/fish/**
 {{ end }}
 
+# AppData es exclusivo de Windows: en Linux/macOS crearía un ~/AppData falso.
+# Hoy solo contiene la config de Windows Terminal.
+{{ if ne .chezmoi.os "windows" }}
+AppData/**
+AppData
+{{ end }}
+
 # Auto-generado por Fish — no trackear
 .config/fish/fish_variables
 

@@ -38,6 +38,7 @@ Reglas que el repo cumple hoy, para no reintroducir los mismos bugs:
 - La clave de firma SSH se resuelve una sola vez en `.chezmoitemplates/git-signing-key.tmpl` (`id_ed25519` > `id_rsa` > `.git.signingkey` > vacío) y `commit.gpgsign` se desactiva cuando no hay clave, así una máquina nueva puede commitear igual.
 - Las herramientas que pueden faltar (`delta`, `code`, `nvim`) están gateadas con `lookPath`.
 - Windows Terminal se trackea con `"commandline": "nu.exe"` (resuelve por PATH vía el shim de Scoop) en lugar de la ruta absoluta `C:/Users/<usuario>/scoop/apps/nu/current/nu.exe`, y `AppData/**` se ignora fuera de Windows.
+- `run_once_after_set-xdg` fija además `GH_CONFIG_DIR` en `%APPDATA%\GitHub CLI`: `gh` prefiere `$XDG_CONFIG_HOME` si existe y ahí no tiene sus credenciales, así que sin esa variable responde «not logged in» con XDG activo. Se resuelve por variable de usuario y no por perfil, para cubrir PowerShell, nushell y Git Bash a la vez.
 - Aplica exactamente un provisioner por OS.
 - `.chezmoiversion` fija la versión mínima de chezmoi (2.74.0).
 

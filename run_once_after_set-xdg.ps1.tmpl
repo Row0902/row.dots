@@ -13,6 +13,14 @@
 #
 # The data dir ($nu.data-dir: history, plugin registry, vendor autoload) stays in
 # %APPDATA%\nushell on purpose; only these XDG locations move.
+#
+# GH_CONFIG_DIR pins `gh` back to its native Windows location. GitHub CLI prefers
+# $XDG_CONFIG_HOME when it is set (it looks for $XDG_CONFIG_HOME/gh), but on
+# Windows it keeps its config and auth in %APPDATA%\GitHub CLI. With XDG set and
+# nothing else, `gh auth status` answers "You are not logged into any GitHub
+# hosts" even with a valid session; `GH_CONFIG_DIR` restores it and covers every
+# shell at once (PowerShell, nushell and Git Bash alike), instead of patching one
+# profile at a time.
 {{ if ne .chezmoi.os "windows" -}}
 # Not on Windows — skip
 exit 0
@@ -21,6 +29,7 @@ $dirs = [ordered]@{
     "XDG_CONFIG_HOME" = Join-Path $env:USERPROFILE ".config"
     "XDG_CACHE_HOME"  = Join-Path $env:USERPROFILE ".cache"
     "XDG_DATA_HOME"   = Join-Path $env:USERPROFILE ".local\share"
+    "GH_CONFIG_DIR"   = Join-Path ([Environment]::GetFolderPath("ApplicationData")) "GitHub CLI"
 }
 
 $changed = $false

@@ -7,13 +7,10 @@
 #   # o si estás en el repo:
 #   ./scripts/bootstrap.sh
 #
-# Hace:
-#   1. brew bundle (instala todas las tools del Brewfile)
-#   2. Git identidad local (name, email) si no existe ~/.gitconfig.local
-#   3. Fish como shell por defecto (chsh)
-#   4. Detecta / importa / genera claves SSH
-#   5. gh auth login
-#   6. Cambia remote a SSH
+# Hace (solo lo interactivo: brew bundle, chsh e identidad los resuelve chezmoi):
+#   1. Detecta / importa / genera claves SSH
+#   2. gh auth login
+#   3. Cambia remote a SSH
 #
 # Es IDEMPOTENTE — podés correrlo varias veces sin romper nada.
 # ────────────────────────────────────────────────────────────────────────
@@ -48,26 +45,21 @@ echo -e "${BOLD}
 # ═══════════════════════════════════════════════════════════════════════
 
 phase_1_install_tools() {
-    info "Phase 1: Installing tools"
+    info "Fase 0: herramientas (las provisiona chezmoi)"
 
-    # Si run_once_ ya instaló (chezmoi apply ejecutado antes), skip
+    # La lista de paquetes es propiedad de run_once_before_install-homebrew.sh.tmpl.
+    # Este script no mantiene una copia propia: dos dueños divergen.
     if command -v fish &>/dev/null && command -v starship &>/dev/null; then
-        info "Tools already installed (run_once_ completed), skipping Phase 1"
+        ok "Tools ya instaladas por chezmoi"
         return 0
     fi
 
-    # Fallback: correr brew bundle si estamos antes del primer apply
-    if ! command -v brew &>/dev/null; then
-        info "Instalando Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        ok "Homebrew instalado"
+    info "Faltan tools: corriendo 'chezmoi apply' para disparar el run_once..."
+    if command -v chezmoi &>/dev/null; then
+        chezmoi apply || warn "chezmoi apply tuvo issues; resolvé el error y reintentá"
     else
-        ok "Homebrew ya instalado"
+        warn "chezmoi no está en PATH. Corré 'chezmoi apply' y volvé a ejecutar este script."
     fi
-
-    info "Instalando tools via brew bundle..."
-    brew bundle --file "$REPO_DIR/Brewfile" || warn "brew bundle tuvo issues (podés re-ejecutarlo)"
-    ok "Tools instaladas"
 }
 
 phase_1_install_tools
@@ -76,57 +68,32 @@ phase_1_install_tools
 # FASE 2: Git identidad local
 # ═══════════════════════════════════════════════════════════════════════
 
-info "Fase 2/6: Git identidad local"
+info "Fase 0: Git identidad"
 
+# ~/.gitconfig.local lo gestiona chezmoi (dot_gitconfig.local.tmpl): la identidad
+# sale de los prompts de init y la signing key SSH se resuelve sola. Escribirlo
+# acá peleaba con el próximo 'chezmoi apply'.
 GITCONFIG_LOCAL="$HOME/.gitconfig.local"
 if [ -f "$GITCONFIG_LOCAL" ] && grep -q "\[user\]" "$GITCONFIG_LOCAL" 2>/dev/null; then
-    ok "~/.gitconfig.local ya existe con identidad configurada"
+    ok "Identidad de Git presente (gestionada por chezmoi)"
 else
-    info "Configurando identidad git..."
-    echo ""
-    read -rp "  Nombre completo: " git_name
-    read -rp "  Email: " git_email
-    read -rp "  GPG signing key (vacío si no tenés): " git_key
-    echo ""
-
-    cat > "$GITCONFIG_LOCAL" <<-EOF
-[user]
-    name = $git_name
-    email = $git_email
-EOF
-    if [ -n "$git_key" ]; then
-        echo "    signingkey = $git_key" >> "$GITCONFIG_LOCAL"
-    fi
-    ok "~/.gitconfig.local creado"
+    warn "Falta la identidad: corré 'chezmoi init' para responder los prompts y después 'chezmoi apply'."
 fi
 
 # ═══════════════════════════════════════════════════════════════════════
 # FASE 2: Fish shell
 # ═══════════════════════════════════════════════════════════════════════
 
-info "Fase 3/6: Fish shell"
+info "Fase 0: Fish shell"
 
-FISH_PATH="$(command -v fish || echo "")"
-if [ -z "$FISH_PATH" ]; then
-    warn "Fish no está instalado. Primero corré: brew bundle --file $REPO_DIR/Brewfile"
-else
-    if [ "$SHELL" != "$FISH_PATH" ]; then
-        info "Cambiando shell por defecto a Fish..."
-        if chsh -s "$FISH_PATH" 2>/dev/null; then
-            ok "Shell cambiado a Fish (efectivo al próximo login)"
-        else
-            warn "No se pudo cambiar la shell. Probá: chsh -s $FISH_PATH"
-        fi
-    else
-        ok "Fish ya es el shell por defecto"
-    fi
-fi
+# La entrada en /etc/shells y el cambio de shell por defecto los resuelve
+# run_once_before_install-homebrew.sh.tmpl. No se duplican acá.
 
 # ═══════════════════════════════════════════════════════════════════════
 # FASE 3: SSH
 # ═══════════════════════════════════════════════════════════════════════
 
-info "Fase 4/6: SSH"
+info "Fase 1/3: SSH"
 
 detect_ssh_keys() {
     local dir="$1"
@@ -230,7 +197,7 @@ fi
 # FASE 4: GitHub Auth
 # ═══════════════════════════════════════════════════════════════════════
 
-info "Fase 5/6: GitHub CLI"
+info "Fase 2/3: GitHub CLI"
 
 if command -v gh &>/dev/null; then
     if ! gh auth status &>/dev/null; then
@@ -248,7 +215,7 @@ fi
 # FASE 5: Remote SSH
 # ═══════════════════════════════════════════════════════════════════════
 
-info "Fase 6/6: Remote"
+info "Fase 3/3: Remote"
 
 if [ "${setup_ssh_remote:-false}" = true ]; then
     remote_url="$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || echo "")"

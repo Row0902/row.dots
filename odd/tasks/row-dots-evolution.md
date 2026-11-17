@@ -10,6 +10,7 @@ Objetivo: saneamiento, portabilidad real entre máquinas/usuarios y eliminación
 - **S3** — «que los dots tienen que ser transversal al equipo o usuario»: ningún template puede asumir un usuario, un home, una ruta absoluta ni una herramienta instalada; se resuelve con `.chezmoi.homeDir`, `.chezmoidata.toml`, partials y `lookPath`.
 - **S4** — «lo de openspect deberíamos pasarlo a odd y listo porque ya no utilizo sdd o borrarlo simplemente si tienes todo el conocimiento de los dots»: retirar `openspec/` del repo; el historial queda recuperable en git y el conocimiento vigente pasa a este documento ODD.
 - **S5** — Verificación obligatoria: ningún task se cierra sin `chezmoi managed`, `chezmoi status` y `chezmoi apply --dry-run` en verde. Los cambios ya aplicados a `$HOME` se confirman con `chezmoi cat`.
+- **S6** — «los paquetes que se instalan los vamos a pasar a scoop no winget a exepción de los que sean más viable integrarlo por winget»: en Windows la vía por defecto es Scoop; winget queda reservado para lo que integra con el sistema operativo (instalador MSI, PATH de sistema, Credential Manager, OpenSSH). Un solo dueño por lista de paquetes: el `run_once` provisiona, el bootstrap solo hace lo interactivo.
 
 ## Tasks
 
@@ -21,6 +22,10 @@ Objetivo: saneamiento, portabilidad real entre máquinas/usuarios y eliminación
 - **T6** · S4 · inline · 869feb6 · Borrar `openspec/` (457K, ~90 docs de SDD discontinuado) y dejar este documento como fuente de verdad. Eliminar la regla `openspec/**` del `.chezmoiignore`. **Hecho** (73 archivos; se agregaron `odd/**` y `LICENSE` al ignore para que no aterricen en `$HOME`).
 - **T7** · S1 · inline · 869feb6 · Corregir drift factual del `README.md`: badge de LICENSE sin LICENSE, `dot_gitignore_global` vs `.tmpl`, árbol de estructura incompleto, Scoop vs winget. **Hecho** + `LICENSE` MIT creado (visible el badge sin archivo).
 - **T8** · S5 · verify · sin commit (verificación) · Verificación final: `managed`, `status`, `apply --dry-run`, renders de cada template tocado.
+- **T9** · S3,S6 · inline · — · Provisioner Windows scoop-first: el `run_once` instala Scoop + bucket `main` + la lista portable; winget queda solo con `Git.Git` (Credential Manager y OpenSSH de sistema) y `Microsoft.PowerShell` (MSI con PATH de sistema).
+- **T10** · S1,S3 · inline · — · `bootstrap.ps1` deja de duplicar la lista de paquetes y de escribir `~/.gitconfig.local` (propiedad de chezmoi); queda solo con lo interactivo: ssh-agent, `gh auth login`, remote a SSH.
+- **T11** · S1,S3 · inline · — · `bootstrap.sh` deja de escribir `~/.gitconfig.local` y de duplicar `brew bundle`; la identidad y la signing key SSH las resuelve chezmoi. Los prompts «GPG» desaparecen con esa fase.
+- **T12** · S5,S6 · verify · — · Verificar: un solo dueño por lista de paquetes, render de los 4 scripts, ningún script escribe archivos gestionados por chezmoi, `chezmoi apply --dry-run`.
 
 ## Log
 

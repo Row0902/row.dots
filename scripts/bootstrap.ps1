@@ -7,12 +7,10 @@
 #   # o si estás en el repo:
 #   pwsh .\scripts\bootstrap.ps1
 #
-# Hace:
-#   1. Scoop + tools (instala todas las tools del listado)
-#   2. Git identidad local (name, email) si no existe .gitconfig.local
-#   3. Detecta / genera claves SSH + ssh-agent
-#   4. gh auth login
-#   5. Cambia remote a SSH
+# Hace (solo lo interactivo: los paquetes los provisiona el run_once de chezmoi):
+#   1. Detecta / importa / genera claves SSH + ssh-agent
+#   2. gh auth login
+#   3. Cambia remote a SSH
 #
 # Es IDEMPOTENTE — podés correrlo varias veces sin romper nada.
 # ────────────────────────────────────────────────────────────────────────
@@ -36,75 +34,40 @@ function Test-AdminElevation {
 # FASE 1: Scoop + Tools
 # ═══════════════════════════════════════════════════════════════════════
 
-function Install-ScoopAndTools {
-    Write-BootstrapInfo "Phase 1: Installing tools"
+function Invoke-ChezmoiProvisioning {
+    Write-BootstrapInfo "Phase 1: Tools (provisioned by chezmoi)"
 
-    # Check if Scoop is installed
-    if (-not (Get-Command "scoop" -ErrorAction SilentlyContinue)) {
-        Write-BootstrapInfo "Instalando Scoop..."
-        Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force
-        Invoke-RestMethod -Uri "https://get.scoop.sh" | Invoke-Expression
-        if (-not (Get-Command "scoop" -ErrorAction SilentlyContinue)) {
-            Write-BootstrapError "No se pudo instalar Scoop. Probá: Set-ExecutionPolicy RemoteSigned -Scope CurrentUser"
-            exit 1
-        }
-        Write-BootstrapOk "Scoop instalado"
+    # Package installation is owned by run_once_before_install-packages.ps1.tmpl.
+    # This script must never keep its own copy of the list: two owners drift.
+    if (Get-Command starship -ErrorAction SilentlyContinue) {
+        Write-BootstrapOk "Tools ya instaladas por chezmoi"
+        return
+    }
+
+    Write-BootstrapInfo "Faltan tools: corriendo 'chezmoi apply' para disparar el run_once..."
+    if (Get-Command chezmoi -ErrorAction SilentlyContinue) {
+        chezmoi apply
     } else {
-        Write-BootstrapOk "Scoop ya instalado"
+        Write-BootstrapWarn "chezmoi no está en PATH. Corré 'chezmoi apply' y volvé a ejecutar este script."
     }
-
-    # Add extras bucket
-    scoop bucket add extras 2>$null
-    Write-BootstrapOk "Bucket extras asegurado"
-
-    # Tools to install
-    $scoopPackages = @(
-        "starship", "eza", "bat", "fd", "ripgrep",
-        "fzf", "zoxide", "atuin", "delta", "gh",
-        "lazygit", "uv", "fnm", "neovim", "direnv", "nu"
-    )
-
-    foreach ($pkg in $scoopPackages) {
-        if (Get-Command $pkg -ErrorAction SilentlyContinue) {
-            Write-BootstrapInfo "$pkg ya instalado (skip)"
-            continue
-        }
-        Write-BootstrapInfo "Instalando $pkg..."
-        scoop install $pkg 2>&1 | Out-Null
-    }
-
-    Write-BootstrapOk "Tools instaladas"
 }
 
 # ═══════════════════════════════════════════════════════════════════════
 # FASE 2: Git identidad local
 # ═══════════════════════════════════════════════════════════════════════
 
-function Set-GitIdentity {
-    Write-BootstrapInfo "Phase 2: Git identidad local"
+function Test-GitIdentity {
+    Write-BootstrapInfo "Phase 2: Git identidad"
 
+    # ~/.gitconfig.local lo gestiona chezmoi (dot_gitconfig.local.tmpl): la
+    # identidad sale de los prompts de init y la signing key SSH se resuelve
+    # sola. Escribirlo acá peleaba con el próximo 'chezmoi apply'.
     $gitconfigLocal = Join-Path $env:USERPROFILE ".gitconfig.local"
     if ((Test-Path $gitconfigLocal) -and (Select-String -Path $gitconfigLocal -Pattern '\[user\]' -Quiet)) {
-        Write-BootstrapOk "~/.gitconfig.local ya existe con identidad configurada"
-        return
+        Write-BootstrapOk "Identidad de Git presente (gestionada por chezmoi)"
+    } else {
+        Write-BootstrapWarn "Falta la identidad: corré 'chezmoi init' para responder los prompts y después 'chezmoi apply'."
     }
-
-    Write-BootstrapInfo "Configurando identidad git..."
-    $gitName = Read-Host "  Nombre completo"
-    $gitEmail = Read-Host "  Email"
-    $gitKey = Read-Host "  GPG signing key (vacío si no tenés)"
-
-    @"
-[user]
-    name = $gitName
-    email = $gitEmail
-"@ | Set-Content $gitconfigLocal -Encoding UTF8
-
-    if ($gitKey) {
-        Add-Content $gitconfigLocal "    signingkey = $gitKey" -Encoding UTF8
-    }
-
-    Write-BootstrapOk "~/.gitconfig.local creado"
 }
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -112,7 +75,7 @@ function Set-GitIdentity {
 # ═══════════════════════════════════════════════════════════════════════
 
 function Setup-SSHKeys {
-    Write-BootstrapInfo "Phase 4: SSH"
+    Write-BootstrapInfo "Phase 3: SSH"
 
     $sshDir = Join-Path $env:USERPROFILE ".ssh"
     $setupRemote = $false
@@ -185,7 +148,7 @@ function Setup-SSHKeys {
 # ═══════════════════════════════════════════════════════════════════════
 
 function Setup-GitHubAuth {
-    Write-BootstrapInfo "Phase 5: GitHub CLI"
+    Write-BootstrapInfo "Phase 4: GitHub CLI"
 
     if (-not (Get-Command "gh" -ErrorAction SilentlyContinue)) {
         Write-BootstrapInfo "Instalando gh..."
@@ -213,7 +176,7 @@ function Convert-ToSshRemote {
         [string]$repoDir
     )
 
-    Write-BootstrapInfo "Phase 6: Remote"
+    Write-BootstrapInfo "Phase 5: Remote"
 
     if (-not $setupRemote) {
         Write-BootstrapInfo "No hay claves SSH disponibles, omitiendo cambio de remote"
@@ -254,8 +217,8 @@ if (-not $isAdmin) {
 }
 
 # Run phases
-Install-ScoopAndTools
-Set-GitIdentity
+Invoke-ChezmoiProvisioning
+Test-GitIdentity
 $shouldSetupRemote = Setup-SSHKeys
 Setup-GitHubAuth
 Convert-ToSshRemote -setupRemote $shouldSetupRemote -repoDir $script:RepoDir

@@ -1,30 +1,63 @@
 # chezmoi: run_once_before_install-packages.ps1.tmpl
-# Instala packages via winget en Windows
+# Provisioner de Windows.
+#
+# Scoop es la vía por defecto para las CLI portables. winget queda reservado
+# para lo que integra con el sistema operativo: Git for Windows (trae el
+# Credential Manager y el OpenSSH que usa dot_gitconfig.tmpl) y PowerShell 7
+# como MSI con entrada en el PATH de sistema.
 {{ if ne .chezmoi.os "windows" -}}
 # Not on Windows — skip
 exit 0
 {{ end -}}
-$packages = @(
-    "Git.Git",
-    "Microsoft.PowerShell",
-    "Neovim.Neovim",
-    "starship.starship",
-    "eza-community.eza",
-    "BurntSushi.ripgrep.MSVC",
-    "junegunn.fzf",
-    "sharkdp.bat",
-    "dandavison.delta",
-    "direnv.direnv",
-    "Nushell.Nushell"
+$ErrorActionPreference = "Continue"
+
+# CLI portables: Scoop
+$scoopPackages = @(
+    "starship", "eza", "bat", "fd", "ripgrep",
+    "fzf", "zoxide", "atuin", "delta", "gh",
+    "lazygit", "uv", "fnm", "neovim", "direnv", "nu"
 )
 
-$winget = Get-Command winget -ErrorAction SilentlyContinue
-if (-not $winget) {
-    Write-Warning "winget not found — skipping package installation"
-    exit 0
+# Integración con el sistema: winget
+$wingetPackages = @(
+    "Git.Git",
+    "Microsoft.PowerShell"
+)
+
+# ── Scoop ──────────────────────────────────────────────────────────────
+if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
+    Write-Host "Installing Scoop..."
+    Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force
+    Invoke-RestMethod -Uri "https://get.scoop.sh" | Invoke-Expression
+
+    # Scoop's installer appends its shim dir to the *user* PATH, which this
+    # already-running process does not observe. Refresh it here or every
+    # Get-Command below misses the tool it just installed.
+    $env:PATH = [Environment]::GetEnvironmentVariable("Path", "User") + ";" +
+                [Environment]::GetEnvironmentVariable("Path", "Machine")
 }
 
-foreach ($pkg in $packages) {
-    Write-Host "Installing $pkg..."
-    & winget install --id $pkg --silent --accept-package-agreements
+if (Get-Command scoop -ErrorAction SilentlyContinue) {
+    scoop bucket add extras 2>$null | Out-Null
+    foreach ($pkg in $scoopPackages) {
+        if (Get-Command $pkg -ErrorAction SilentlyContinue) {
+            Write-Host "$pkg already on PATH, skipping"
+            continue
+        }
+        Write-Host "Installing $pkg via scoop..."
+        scoop install $pkg 2>&1 | Out-Null
+    }
+} else {
+    Write-Warning "Scoop unavailable — portable tools skipped. Re-run this machine's apply or scripts/bootstrap.ps1."
+}
+
+# ── winget (system integration only) ──────────────────────────────────
+if (Get-Command winget -ErrorAction SilentlyContinue) {
+    foreach ($pkg in $wingetPackages) {
+        Write-Host "Installing $pkg via winget..."
+        # --exact: without it, Microsoft.PowerShell resolves to the Preview package.
+        & winget install --id $pkg --exact --silent --accept-package-agreements --accept-source-agreements
+    }
+} else {
+    Write-Warning "winget not found — Git and PowerShell skipped."
 }

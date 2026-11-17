@@ -1,0 +1,31 @@
+# chezmoi: run_once_after_install-runtimes.ps1.tmpl
+# Windows only.
+#
+# mise owns node, pnpm, go, uv, gh and bun on every platform; the package lists
+# only install mise itself. This runs *after* the file targets so
+# ~/.config/mise/config.toml already exists when mise reads it.
+{{ if ne .chezmoi.os "windows" -}}
+# Not on Windows — skip
+exit 0
+{{ end -}}
+if (-not (Get-Command mise -ErrorAction SilentlyContinue)) {
+    Write-Warning "mise not found — runtimes skipped."
+    exit 0
+}
+
+# mise writes real shims here. Without this entry the tools it manages only
+# exist inside a shell that ran `mise activate`.
+$shims = Join-Path $env:LOCALAPPDATA "mise\shims"
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+
+if ($userPath -notlike "*$shims*") {
+    [Environment]::SetEnvironmentVariable("Path", "$userPath;$shims", "User")
+    Write-Host "Added $shims to the user PATH"
+}
+if ($env:PATH -notlike "*$shims*") {
+    $env:PATH = "$env:PATH;$shims"
+}
+
+Write-Host "Installing runtimes from mise.toml..."
+mise install
+mise ls

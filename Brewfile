@@ -21,11 +21,10 @@ brew "git-delta"
 brew "gh"
 brew "lazygit"
 
-# ── Languages ──────────────────────────────────────────────────────────
-brew "uv"
-brew "fnm"
-tap "oven-sh/bun"
-brew "bun"
+# ── Runtimes ───────────────────────────────────────────────────────────
+# mise owns node, pnpm, go, uv, gh and bun; its config lives in
+# dot_config/mise/config.toml. rustup stays separate: it owns cargo and rustc.
+brew "mise"
 brew "rustup"
 
 # AI

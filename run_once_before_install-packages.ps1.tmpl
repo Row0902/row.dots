@@ -11,22 +11,26 @@ exit 0
 {{ end -}}
 $ErrorActionPreference = "Continue"
 
-# CLI portables: Scoop
+# CLIs: Scoop
 # atuin, fnm and neovim are intentionally absent from this list: every hook
 # that initialises them lives in dot_config/fish/**, which .chezmoiignore
-# excludes on Windows, so installing them there buys nothing. Node is managed
-# outside these lists on this machine, and git falls back to VS Code for the
-# editor. They stay in the Brewfile, where fish does consume them.
+# excludes on Windows, so installing them there buys nothing. They stay in the
+# Brewfile, where fish does consume them.
+# gh, uv, node, pnpm, go and bun are not here either: mise owns those and
+# installs them from dot_config/mise/config.toml via
+# run_once_after_install-runtimes.ps1.tmpl.
 $scoopPackages = @(
     "starship", "eza", "bat", "fd", "ripgrep",
-    "fzf", "zoxide", "delta", "gh",
-    "lazygit", "uv", "direnv", "nu"
+    "fzf", "zoxide", "delta",
+    "lazygit", "direnv", "nu", "mise"
 )
 
 # Integración con el sistema: winget
 $wingetPackages = @(
     "Git.Git",
-    "Microsoft.PowerShell"
+    "Microsoft.PowerShell",
+    # rustup owns cargo/rustc and its own toolchains; mise stays out of rust.
+    "Rustlang.Rustup"
 )
 
 # ── Scoop ──────────────────────────────────────────────────────────────

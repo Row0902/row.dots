@@ -1,0 +1,15 @@
+# Runtimes.
+#
+# mise is the single owner for these on every platform: the Scoop and Homebrew
+# lists install mise, not the tools themselves. uv is here rather than in Scoop
+# because it manages whole Python projects, not just the interpreter version.
+#
+# rust is deliberately absent: rustup owns cargo and rustc and manages its own
+# toolchains (Rustlang.Rustup on Windows, `brew "rustup"` elsewhere).
+[tools]
+node = "lts"
+pnpm = "latest"
+go = "latest"
+uv = "latest"
+gh = "latest"
+bun = "latest"

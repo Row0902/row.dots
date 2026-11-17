@@ -26,6 +26,16 @@ Objetivo: saneamiento, portabilidad real entre máquinas/usuarios y eliminación
 - **T10** · S1,S3 · inline · — · `bootstrap.ps1` deja de duplicar la lista de paquetes y de escribir `~/.gitconfig.local` (propiedad de chezmoi); queda solo con lo interactivo: ssh-agent, `gh auth login`, remote a SSH.
 - **T11** · S1,S3 · inline · — · `bootstrap.sh` deja de escribir `~/.gitconfig.local` y de duplicar `brew bundle`; la identidad y la signing key SSH las resuelve chezmoi. Los prompts «GPG» desaparecen con esa fase.
 - **T12** · S5,S6 · verify · — · Verificar: un solo dueño por lista de paquetes, render de los 4 scripts, ningún script escribe archivos gestionados por chezmoi, `chezmoi apply --dry-run`.
+- **T13** · S3,S7 · inline · — · Cablear zoxide en el autoload gestionado de nushell (`autoload/zoxide.nu`) **antes** de mover el config dir, y verificar que `autoload/direnv.nu` funciona en nu 0.116 (`env-conversions` de std).
+- **T14** · S3,S7,S8 · inline · — · `run_once_after_set-xdg.ps1.tmpl`: setea `XDG_CONFIG_HOME` a `%USERPROFILE%\.config` en scope User, idempotente. Verificar que `nu` pasa a leer `~/.config/nushell` y que el data-dir (historial, plugin, vendor) sigue en `%APPDATA%`.
+- **T15** · S7,S8 · inline · — · Perfiles de PowerShell: cuerpo en `dot_config/powershell/profile.ps1` + `run_onchange_after_copy-powershell-profiles.ps1.tmpl` que resuelve `Documents` con `GetFolderPath('MyDocuments')`. Borrar la regla muerta `Documents/PowerShell/**` del ignore.
+- **T16** · S7 · inline · — · Borrar restos de la migración: `~/.config/nushell/env.nu`, `~/.config/chezmoi/chezmoi.toml.bak-*`, el config previo `AppData/Roaming/nushell/config.nu` y `~/.zoxide.nu`, cada uno después de que su reemplazo esté verificado.
+- **T17** · S3,S7 · inline · — · Portabilidad real de los targets de Windows: `direnvrc` con rama por OS (`.venv/Scripts`), `filemode` solo fuera de Windows, quitar `[protocol] version = 2`.
+- **T18** · S1,S7 · inline · — · Limpieza del repo: claves muertas de `.chezmoidata.toml`, borrar `os-path.tmpl` y `git-identity.tmpl`, `dot_gitignore_global.tmpl` → sin `.tmpl`, y corregir el README (provisioner scoop/winget, árbol real).
+- **T19** · S5,S7 · verify · — · Verificación final de Windows: `chezmoi managed`/`status`/`apply --dry-run`, `nu` leyendo el config gestionado, perfiles copiados, sin restos, y render de cada template tocado.
+
+- **S7** — «antes puliremos windows completo que es mi sistema operativo principal»: Windows es el SO principal y tiene que quedar coherente antes de validar la rama Linux en Fedora WSL. Un archivo aplicado que nadie lee, o un config leído que no está en el repo, es deuda.
+- **S8** — Decisiones de S7: nushell se unifica con `XDG_CONFIG_HOME` seteado desde el repo (User scope, vía `run_once`), y los perfiles de PowerShell se incorporan por copia `run_onchange` a `Documents` (sin symlinks, que requieren elevación y no cruzan de C: a D:).
 
 ## Log
 

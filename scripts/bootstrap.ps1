@@ -227,5 +227,5 @@ Write-Host ""
 Write-Host "✓ Bootstrap completo." -ForegroundColor Green
 Write-Host ""
 Write-Host "  Recordá:"
-Write-Host "  • fish y zellij no se instalan en Windows — usá WSL para esos"
+Write-Host "  • fish no se instala en Windows — usá WSL para eso"
 Write-Host "  • Cualquier fase podés re-ejecutarla con: $PSCommandPath"

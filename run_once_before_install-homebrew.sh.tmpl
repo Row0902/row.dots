@@ -49,15 +49,18 @@ brew trust --formula anomalyco/tap/opencode
 BREWFILE_SOURCE="{{ .chezmoi.sourceDir }}/Brewfile"
 if [ -f "$BREWFILE_SOURCE" ]; then
     echo "🔄 Executing 'brew bundle' using source file..."
-    brew bundle --file="$BREWFILE_SOURCE" && brew cleanup
+    brew bundle --file="$BREWFILE_SOURCE"
 else
     if [ -f "$HOME/Brewfile" ]; then
         echo "🔄 Executing 'brew bundle' from global path..."
-        brew bundle --global && brew cleanup
+        brew bundle --global
     else
         echo "⚠️ Warning: No Brewfile found to process."
     fi
 fi
+
+echo "🧹 Cleaning up old versions and cached downloads..."
+brew cleanup
 
 BREW_FISH="/home/linuxbrew/.linuxbrew/bin/fish"
 BREW_NU="/home/linuxbrew/.linuxbrew/bin/nu"

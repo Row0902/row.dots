@@ -6,6 +6,7 @@
 #   2. update the manager and its catalogues  <- before installing anything
 #   3. declare buckets and apps               <- scoopfile.json / Brewfile
 #   4. install what no portable manager ships (system integration, via winget)
+#   5. clean up old versions and the download cache
 #
 # The app list is NOT kept here: it lives in scoopfile.json, which is the format
 # `scoop export` produces, so the file round-trips and the list has one owner.
@@ -61,4 +62,13 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
     }
 } else {
     Write-Warning "winget not found — Git, PowerShell and rustup skipped."
+}
+
+# ── 5. Cleanup ────────────────────────────────────────────────────────
+# Old app versions pile up in ~\scoop\apps and every installer stays cached in
+# ~\scoop\cache. Cleanup runs last so it never deletes something still needed.
+if (Get-Command scoop -ErrorAction SilentlyContinue) {
+    Write-Host "Removing old versions and the download cache..."
+    scoop cleanup -a
+    scoop cache rm -a
 }

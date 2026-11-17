@@ -1,9 +1,3 @@
-set -l brew_bin "/home/linuxbrew/.linuxbrew/bin"
-
-if test -d "$brew_bin"
-    fish_add_path "$brew_bin"
-end
-
 if type -q fnm
     set -l old_xdg $XDG_RUNTIME_DIR
     set -e XDG_RUNTIME_DIR

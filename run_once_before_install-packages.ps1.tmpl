@@ -29,6 +29,12 @@ if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
     Write-Host "Installing Scoop..."
     Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force
     Invoke-RestMethod -Uri "https://get.scoop.sh" | Invoke-Expression
+
+    # Scoop's installer appends its shim dir to the *user* PATH, which this
+    # already-running process does not observe. Refresh it here or every
+    # Get-Command below misses the tool it just installed.
+    $env:PATH = [Environment]::GetEnvironmentVariable("Path", "User") + ";" +
+                [Environment]::GetEnvironmentVariable("Path", "Machine")
 }
 
 if (Get-Command scoop -ErrorAction SilentlyContinue) {

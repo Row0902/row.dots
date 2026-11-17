@@ -1,24 +1,41 @@
 # chezmoi: run_once_after_set-xdg.ps1.tmpl
 # Windows only.
 #
-# nushell (and any other XDG-aware tool) resolves its config dir from
-# XDG_CONFIG_HOME when it is set to an absolute path; otherwise nushell uses
-# %APPDATA%\nushell. Setting it here makes the managed dot_config/** targets
-# the ones that actually load, on this machine and on any other Windows box.
+# Windows does not define HOME, and nushell/PowerShell/other XDG-aware tools fall
+# back to it when a specific XDG variable is missing. direnv resolves its three
+# directories separately and aborts on the first one it cannot find, which is why
+# a terminal opened with only XDG_CONFIG_HOME set prints:
 #
-# The data dir ($nu.data-dir: history, plugin registry, vendor autoload) stays
-# in %APPDATA%\nushell, which is what we want: only config comes from the repo.
+#   direnv: error couldn't find a cache directory for direnv
+#
+# Setting all three keeps the ~/.config, ~/.cache and ~/.local/share triad
+# identical to Linux, which is the point of this repository.
+#
+# The data dir ($nu.data-dir: history, plugin registry, vendor autoload) stays in
+# %APPDATA%\nushell on purpose; only these XDG locations move.
 {{ if ne .chezmoi.os "windows" -}}
 # Not on Windows — skip
 exit 0
 {{ end -}}
-$configHome = Join-Path $env:USERPROFILE ".config"
-$current = [Environment]::GetEnvironmentVariable("XDG_CONFIG_HOME", "User")
+$dirs = [ordered]@{
+    "XDG_CONFIG_HOME" = Join-Path $env:USERPROFILE ".config"
+    "XDG_CACHE_HOME"  = Join-Path $env:USERPROFILE ".cache"
+    "XDG_DATA_HOME"   = Join-Path $env:USERPROFILE ".local\share"
+}
 
-if ($current -eq $configHome) {
-    Write-Host "XDG_CONFIG_HOME already set to $configHome"
-} else {
-    [Environment]::SetEnvironmentVariable("XDG_CONFIG_HOME", $configHome, "User")
-    Write-Host "XDG_CONFIG_HOME set to $configHome (user scope)"
+$changed = $false
+foreach ($name in $dirs.Keys) {
+    $want = $dirs[$name]
+    $current = [Environment]::GetEnvironmentVariable($name, "User")
+    if ($current -eq $want) {
+        Write-Host "$name already set to $want"
+        continue
+    }
+    [Environment]::SetEnvironmentVariable($name, $want, "User")
+    Write-Host "$name set to $want (user scope)"
+    $changed = $true
+}
+
+if ($changed) {
     Write-Host "Open a new terminal for it to take effect."
 }

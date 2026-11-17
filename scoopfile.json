@@ -1,0 +1,36 @@
+{
+    "buckets": [
+        {
+            "Name": "main",
+            "Source": "https://github.com/ScoopInstaller/Main.git"
+        },
+        {
+            "Name": "extras",
+            "Source": "https://github.com/ScoopInstaller/Extras"
+        },
+        {
+            "Name": "nerd-fonts",
+            "Source": "https://github.com/matthewjberger/scoop-nerd-fonts"
+        },
+        {
+            "Name": "row",
+            "Source": "https://github.com/Row0902/scoop-bucket"
+        }
+    ],
+    "apps": [
+        { "Name": "starship", "Source": "main" },
+        { "Name": "eza", "Source": "main" },
+        { "Name": "bat", "Source": "main" },
+        { "Name": "fd", "Source": "main" },
+        { "Name": "ripgrep", "Source": "main" },
+        { "Name": "fzf", "Source": "main" },
+        { "Name": "zoxide", "Source": "main" },
+        { "Name": "delta", "Source": "main" },
+        { "Name": "direnv", "Source": "main" },
+        { "Name": "nu", "Source": "main" },
+        { "Name": "mise", "Source": "main" },
+        { "Name": "lazygit", "Source": "extras" },
+        { "Name": "CascadiaCode-NF", "Source": "nerd-fonts" },
+        { "Name": "cutver-plugins", "Source": "row" }
+    ]
+}

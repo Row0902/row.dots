@@ -9,21 +9,20 @@ Documents/PowerShell/**
 # Auto-generado por Fish — no trackear
 .config/fish/fish_variables
 
-# Target paths (chezmoi matches .chezmoiignore against target filenames, not source)
-# run_once_before_install-packages.sh.tmpl → target: install-packages.sh
-# run_once_before_install-homebrew.sh.tmpl → target: install-homebrew.sh
-# run_once_before_install-packages.ps1.tmpl → target: install-packages.ps1
+# Provisioners. Patterns are matched against target paths, not source names:
+#   run_once_before_install-homebrew.sh.tmpl  -> install-homebrew.sh
+#   run_once_before_install-packages.ps1.tmpl -> install-packages.ps1
+# Each OS keeps exactly its own provisioner; the other one is ignored.
 {{ if eq .chezmoi.os "windows" }}
-install-packages.sh
 install-homebrew.sh
-install-packages.ps1
-{{ end }}
-{{ if ne .chezmoi.os "windows" }}
+{{ else }}
 install-packages.ps1
 {{ end }}
 
 
-openspec/**
+# Repo-only files: viven en git, no son dotfiles y no deben aterrizar en $HOME.
 README.md
 Brewfile
+LICENSE
+odd/**
 scripts/**

@@ -142,6 +142,9 @@ detect_ssh_keys() {
 }
 
 ssh_keys=()
+# Declared here so `set -u` is satisfied on any non-WSL machine; only the WSL
+# branch below fills it.
+win_keys=()
 while IFS= read -r -d '' key; do
     ssh_keys+=("$key")
 done < <(detect_ssh_keys "$HOME/.ssh" | tr '\n' '\0')

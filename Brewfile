@@ -15,6 +15,7 @@ brew "zoxide"
 brew "atuin"
 brew "direnv"
 brew "less"
+brew "neovim"
 
 # ── Git ────────────────────────────────────────────────────────────────
 brew "git-delta"

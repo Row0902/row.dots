@@ -61,7 +61,7 @@ function Install-ScoopAndTools {
     $scoopPackages = @(
         "starship", "eza", "bat", "fd", "ripgrep",
         "fzf", "zoxide", "atuin", "delta", "gh",
-        "lazygit", "uv", "fnm"
+        "lazygit", "uv", "fnm", "neovim", "direnv", "nu"
     )
 
     foreach ($pkg in $scoopPackages) {
@@ -264,5 +264,5 @@ Write-Host ""
 Write-Host "✓ Bootstrap completo." -ForegroundColor Green
 Write-Host ""
 Write-Host "  Recordá:"
-Write-Host "  • Herramientas Unix como fish, direnv, zellij no se instalan en Windows — usá WSL"
+Write-Host "  • fish y zellij no se instalan en Windows — usá WSL para esos"
 Write-Host "  • Cualquier fase podés re-ejecutarla con: $PSCommandPath"

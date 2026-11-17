@@ -1,13 +1,7 @@
 [user]
-    name = {{ .git.user_name }}
-    email = {{ .git.user_email }}
-    
-    {{- $ed25519Path := printf "%s/.ssh/id_ed25519.pub" .chezmoi.homeDir }}
-    {{- $rsaPath := printf "%s/.ssh/id_rsa.pub" .chezmoi.homeDir }}
-    {{- if stat $ed25519Path }}
-    signingkey = "{{ include $ed25519Path | trim -}}"
-    {{- else if stat $rsaPath }}
-    signingkey = "{{ include $rsaPath | trim -}}"
-    {{- else if .git.signingkey }}
-    signingkey = "{{ .git.signingkey }}"
-    {{- end }}
+    name = {{ .git.user_name | quote }}
+    email = {{ .git.user_email | quote }}
+{{- $signingKey := includeTemplate ".chezmoitemplates/git-signing-key.tmpl" . | trim }}
+{{- if $signingKey }}
+    signingkey = {{ $signingKey | quote }}
+{{- end }}

@@ -1,0 +1,23 @@
+# PATH — única definición de rutas para toda la shell.
+# El prefijo de Homebrew sale de .chezmoidata.toml vía .chezmoitemplates/brew-path.tmpl,
+# así que este archivo no asume ni usuario, ni SO, ni prefijo.
+{{- $brewPrefix := includeTemplate ".chezmoitemplates/brew-path.tmpl" . | trim }}
+{{- if $brewPrefix }}
+if test -d "{{ $brewPrefix }}/bin"
+    fish_add_path --global --prepend "{{ $brewPrefix }}/bin"
+end
+{{- end }}
+
+# Bins por usuario, resueltos contra el home real de cada máquina.
+# Van entre comillas: un home con espacios no debe partir la lista.
+for dir in "{{ .chezmoi.homeDir }}/.local/bin" "{{ .chezmoi.homeDir }}/.cargo/bin" "{{ .chezmoi.homeDir }}/.bun/bin" "{{ .chezmoi.homeDir }}/go/bin" "{{ .chezmoi.homeDir }}/.opencode/bin"
+    if test -d $dir
+        fish_add_path --global --prepend $dir
+    end
+end
+
+# pnpm
+set -gx PNPM_HOME "{{ .chezmoi.homeDir }}/.local/share/pnpm"
+if test -d $PNPM_HOME/bin; and not contains -- $PNPM_HOME/bin $PATH
+    fish_add_path --global --prepend $PNPM_HOME/bin
+end

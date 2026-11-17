@@ -24,7 +24,20 @@ Optimizado para **Windows 11** y **Linux**, gestionado declarativamente con [che
 | **Git & Diff** | [Delta](https://github.com/dandavison/delta) | Syntax highlighting, vistas side-by-side y firma criptográfica SSH |
 | **Entornos** | [direnv](https://direnv.net/) | Carga automática de variables de entorno y layouts para Python (`uv`, `venv`) |
 | **Productividad** | [zoxide](https://github.com/ajeetdsouza/zoxide), [eza](https://eza.rocks/), [bat](https://github.com/sharkdp/bat), [fzf](https://github.com/junegunn/fzf) | Reemplazos modernos para `cd`, `ls`, `cat` y búsqueda interactiva |
-| **Paquetes** | [Scoop](https://scoop.sh/) / [Homebrew](https://brew.sh/) | Instalación sin privilegios de administrador en Windows y Linux |
+| **Paquetes** | [winget](https://learn.microsoft.com/windows/package-manager/) / [Homebrew](https://brew.sh/) | Instalación sin privilegios de administrador en Windows y Linux (Scoop solo como vía opcional) |
+
+---
+
+## 🧭 Portabilidad
+
+Reglas que el repo cumple hoy, para no reintroducir los mismos bugs:
+
+- Toda ruta sale de `.chezmoi.homeDir`: no hay literales `/home/<usuario>` ni `C:/Users/<nombre>` en los templates.
+- El prefix de Homebrew se define una sola vez en `.chezmoidata.toml` y se consume vía `.chezmoitemplates/brew-path.tmpl`.
+- La clave de firma SSH se resuelve una sola vez en `.chezmoitemplates/git-signing-key.tmpl` (`id_ed25519` > `id_rsa` > `.git.signingkey` > vacío) y `commit.gpgsign` se desactiva cuando no hay clave, así una máquina nueva puede commitear igual.
+- Las herramientas que pueden faltar (`delta`, `code`, `nvim`) están gateadas con `lookPath`.
+- Aplica exactamente un provisioner por OS.
+- `.chezmoiversion` fija la versión mínima de chezmoi (2.74.0).
 
 ---
 
@@ -38,8 +51,11 @@ El proceso de inicialización clona el repositorio, solicita interactivamente tu
 pwsh -c "& { iex (iwr 'https://get.chezmoi.io') } ; chezmoi init --apply Row0902/row.dots"
 ```
 
-> **Bootstrap opcional (Scoop + herramientas CLI):**  
-> Si querés instalar automáticamente todo el catálogo de herramientas y configurar el servicio `ssh-agent`:
+> **Aprovisionamiento automático (winget):**
+> `chezmoi apply` ejecuta `run_once_before_install-packages.ps1`, el único provisioner de Windows: instala con winget Git, PowerShell, Neovim, starship, eza, ripgrep, fzf, bat, delta, direnv y nushell.
+>
+> **Bootstrap opcional y manual (Scoop + ssh-agent):**  
+> Si preferís el catálogo de Scoop y querés configurar el servicio `ssh-agent`:
 > ```powershell
 > pwsh ~/.local/share/chezmoi/scripts/bootstrap.ps1
 > ```
@@ -115,21 +131,39 @@ Para evitar exponer información privada en repositorios públicos:
 
 ```text
 row.dots/
-├── .chezmoiignore          # Reglas de exclusión por OS (evita scripts/archivos cruzados)
-├── .chezmoidata.toml       # Variables globales de entorno y herramientas
-├── .chezmoi.toml.tmpl      # Asistente de configuración para primer inicio
+├── .chezmoiignore                       # Exclusiones por OS (fish solo en Linux, un provisioner por OS)
+├── .chezmoidata.toml                    # Datos globales: prefix de Homebrew, editor, rama por defecto
+├── .chezmoi.toml.tmpl                   # Asistente de configuración para primer inicio
+├── .chezmoiversion                      # Versión mínima de chezmoi (2.74.0)
+├── .chezmoitemplates/                   # Partials compartidos entre templates
+│   ├── brew-path.tmpl                   # PATH de Homebrew resuelto desde .chezmoidata.toml
+│   ├── git-identity.tmpl                # Identidad de Git
+│   ├── git-signing-key.tmpl             # Clave de firma SSH (fuente única)
+│   └── os-path.tmpl                     # Rutas por sistema operativo
 ├── dot_config/
-│   ├── direnv/             # Configuración y layouts para Python uv/venv
-│   ├── fish/               # Configuración, alias y funciones de Fish shell
-│   ├── nushell/            # Autoloads de Starship y direnv para Nushell
-│   └── starship.toml.tmpl  # Plantilla del prompt con badge dinámico de OS
-├── dot_gitconfig.tmpl      # Configuración de Git (Delta, rebase, SSH signing, credential manager)
-├── dot_gitconfig.local.tmpl# Detección automática de identidad y claves ed25519/rsa
-├── dot_gitignore_global    # Reglas globales de exclusión (Zone.Identifier, etc.)
+│   ├── direnv/                          # Configuración y layouts para Python uv/venv
+│   ├── fish/                            # Solo Linux (ver nota de plataformas)
+│   │   ├── config.fish                  # Configuración base de Fish
+│   │   ├── conf.d/                      # Snippets, incluido 00-path.fish.tmpl
+│   │   ├── functions/                   # Funciones propias (cdl, mkcd, extract…)
+│   │   └── completions/                 # Completions propias
+│   ├── nushell/                         # config.nu + autoloads de Starship y direnv
+│   └── starship.toml.tmpl               # Prompt con badge dinámico de OS
+├── dot_gitconfig.tmpl                   # Git: Delta, rebase, firma SSH, credential manager
+├── dot_gitconfig.local.tmpl             # Identidad y clave detectadas en cada máquina
+├── dot_gitignore_global.tmpl            # Exclusión global (Zone.Identifier, etc.)
+├── run_once_before_install-homebrew.sh.tmpl   # Provisioner Linux/macOS (Homebrew + Brewfile)
+├── run_once_before_install-packages.ps1.tmpl  # Provisioner Windows (winget)
+├── Brewfile                             # Catálogo de paquetes de Homebrew
+├── LICENSE                              # MIT
+├── README.md
+├── odd/                                 # Registros de decisión — nunca se aplican a $HOME
 └── scripts/
-    ├── bootstrap.ps1       # Aprovisionamiento interactivo para Windows (Scoop)
-    └── bootstrap.sh        # Aprovisionamiento interactivo para Linux/macOS (Brew)
+    ├── bootstrap.ps1                    # Opcional en Windows (Scoop + ssh-agent)
+    └── bootstrap.sh                     # Bootstrap interactivo Linux/macOS
 ```
+
+> **Nota de plataformas:** `.chezmoiignore` excluye `dot_config/fish/**` en cualquier SO que no sea Linux, así que en Windows solo aplican nushell, direnv, starship y la configuración de Git.
 
 ---
 

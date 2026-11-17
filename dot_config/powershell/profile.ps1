@@ -6,6 +6,13 @@
 # copia este cuerpo a la carpeta real de Documents.
 #
 # Nada acá asume una ruta absoluta: todo se resuelve con Get-Command.
+# El orden importa: mise primero (PATH y versiones por proyecto), después
+# starship y zoxide, que envuelven el prompt.
+
+# mise — runtimes y versiones por proyecto
+if (Get-Command mise -ErrorAction SilentlyContinue) {
+    (&mise activate pwsh) | Out-String | Invoke-Expression
+}
 
 # Starship prompt
 if (Get-Command starship -ErrorAction SilentlyContinue) {
@@ -15,6 +22,21 @@ if (Get-Command starship -ErrorAction SilentlyContinue) {
 # zoxide — smarter cd (z, zi)
 if (Get-Command zoxide -ErrorAction SilentlyContinue) {
     (zoxide init powershell | Out-String) | Invoke-Expression
+}
+
+# fzf keybindings: fzf has no `--powershell` integration (verified: "unknown
+# option: --powershell"). On Windows they come from the PSFzf module, which is
+# not provisioned here, so PowerShell gets no Ctrl+T / Alt+C bindings.
+
+# Atajos de las herramientas modernas. No se tocan `ls` ni `cat`: en PowerShell
+# son Get-ChildItem y Get-Content, con parámetros que estos reemplazos no tienen.
+if (Get-Command eza -ErrorAction SilentlyContinue) {
+    Set-Alias -Name ll -Value eza
+    function global:lt { eza --tree --level=2 --icons @args }
+}
+
+if (Get-Command lazygit -ErrorAction SilentlyContinue) {
+    Set-Alias -Name lg -Value lazygit
 }
 
 # gentle-shell launcher: gs

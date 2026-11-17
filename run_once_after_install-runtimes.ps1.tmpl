@@ -28,4 +28,23 @@ if ($env:PATH -notlike "*$shims*") {
 
 Write-Host "Installing runtimes from mise.toml..."
 mise install
+
+# uv drops the global python/python3 executables in ~/.local/bin. Prepend it so
+# it wins over the Microsoft Store stub in WindowsApps.
+$localBin = Join-Path $env:USERPROFILE ".local\bin"
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($userPath -notlike "*$localBin*") {
+    [Environment]::SetEnvironmentVariable("Path", "$localBin;$userPath", "User")
+    Write-Host "Added $localBin to the front of the user PATH"
+}
+if ($env:PATH -notlike "*$localBin*") {
+    $env:PATH = "$localBin;$env:PATH"
+}
+
+# nushell deliberately does not get `mise activate`: its `source` is resolved at
+# parse time and hard-fails when the target is missing (a `path exists` guard
+# does not help), the generated script embeds this machine's PATH so it cannot
+# be vendored, and nothing would generate it on Linux. Everything mise manages
+# already resolves in nushell through the shims on the user PATH.
+
 mise ls

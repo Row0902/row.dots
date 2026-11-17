@@ -1,6 +1,13 @@
+{{- $signingKey := includeTemplate ".chezmoitemplates/git-signing-key.tmpl" . | trim -}}
 [core]
+{{- if lookPath "delta" }}
     pager = delta
+{{- end }}
+{{- if lookPath "code" }}
     editor = code --wait
+{{- else if lookPath "nvim" }}
+    editor = nvim
+{{- end }}
 
     autocrlf = input
     filemode = true
@@ -37,6 +44,7 @@
 [protocol]
     version = 2
 
+{{- if lookPath "delta" }}
 [interactive]
     diffFilter = delta --color-only
 
@@ -45,6 +53,7 @@
     side-by-side = true
     line-numbers = true
     theme = Monokai Extended Bright
+{{- end }}
 
 [alias]
     st = status
@@ -65,7 +74,11 @@
     path = ~/.gitconfig.local
 
 [commit]
+{{- if $signingKey }}
     gpgsign = true
+{{- else }}
+    gpgsign = false
+{{- end }}
 
 [gpg]
     format = ssh
@@ -75,7 +88,11 @@
 {{- end }}
 
 [tag]
+{{- if $signingKey }}
     gpgsign = true
+{{- else }}
+    gpgsign = false
+{{- end }}
 
 [credential]
 {{- if eq .chezmoi.os "windows" }}

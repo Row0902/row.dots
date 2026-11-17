@@ -1,0 +1,16 @@
+{{- /*
+Single source of truth for the commit signing key.
+Resolution order: id_ed25519.pub > id_rsa.pub > .git.signingkey > empty.
+Empty means "this machine does not sign", so dot_gitconfig.tmpl turns
+commit.gpgsign off and a fresh machine can still commit.
+Consume it with: includeTemplate ".chezmoitemplates/git-signing-key.tmpl" . | trim
+*/ -}}
+{{- $ed25519 := printf "%s/.ssh/id_ed25519.pub" .chezmoi.homeDir -}}
+{{- $rsa := printf "%s/.ssh/id_rsa.pub" .chezmoi.homeDir -}}
+{{- if stat $ed25519 -}}
+{{- include $ed25519 | trim -}}
+{{- else if stat $rsa -}}
+{{- include $rsa | trim -}}
+{{- else -}}
+{{- .git.signingkey | default "" | trim -}}
+{{- end -}}

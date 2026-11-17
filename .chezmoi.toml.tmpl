@@ -1,6 +1,6 @@
 {{- $name := promptStringOnce . "git.user_name" "Git user name" "set later in ~/.chezmoi.toml" -}}
 {{- $email := promptStringOnce . "git.user_email" "Git user email" "set later in ~/.chezmoi.toml" -}}
-{{- $key := promptStringOnce . "git.signingkey" "GPG signing key (leave empty if none)" "set later in ~/.chezmoi.toml" -}}
+{{- $key := promptStringOnce . "git.signingkey" "SSH signing key (public key line, empty if none)" "set later in ~/.chezmoi.toml" -}}
 [data.git]
     user_name = {{ $name | quote }}
     user_email = {{ $email | quote }}
@@ -8,12 +8,26 @@
 
 [git]
     autoAdd = true
-    autoCommit = true
+    # autoCommit stays off: sync commits are meaningless in a dotfiles repo.
+    # Enable it per machine with `chezmoi git -- commit` or set autoCommit = true.
+    autoCommit = false
     autoPush = false
-    commitMessageTemplate = "chore: sync dotfiles"
+    commitMessageTemplate = "chore(dots): sync dotfiles"
 
+# Editor used by `chezmoi edit`. .chezmoidata.toml is NOT available while this
+# config template renders, so resolve it against the machine's PATH instead.
+{{- if lookPath "code" }}
+[edit]
+    command = "code --wait"
+{{- else if lookPath "nvim" }}
+[edit]
+    command = "nvim"
+{{- end }}
+
+{{- if lookPath "delta" }}
 [diff]
     pager = "delta"
+{{- end }}
 
 # Interpreters.ps1 no declarado explícitamente para que chezmoi maneje
 # el auto-fallback: pwsh → powershell.exe en Windows, pwsh en Unix.

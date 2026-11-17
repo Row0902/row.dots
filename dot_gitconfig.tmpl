@@ -10,12 +10,14 @@
 {{- end }}
 
     autocrlf = input
+{{- if ne .chezmoi.os "windows" }}
     filemode = true
+{{- end }}
 
     untrackedCache = true
 
 [init]
-    defaultBranch = main
+    defaultBranch = {{ .git.default_branch }}
 
 [push]
     autoSetupRemote = true
@@ -40,9 +42,6 @@
 
 [help]
     autocorrect = 10
-
-[protocol]
-    version = 2
 
 {{- if lookPath "delta" }}
 [interactive]

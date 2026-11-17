@@ -1,0 +1,52 @@
+{{- $venvBin := "bin" }}
+{{- $venvPy := "bin/python" }}
+{{- if eq .chezmoi.os "windows" }}
+{{- $venvBin = "Scripts" }}
+{{- $venvPy = "Scripts/python.exe" }}
+{{- end -}}
+# ─── Python layout functions for direnv ────────────────────────────────
+#
+# Elegí una en tu .envrc:
+#   layout uv          → uv (rápido, lock file, recomendado)
+#   layout venv        → python -m venv (built-in, sin dependencias)
+#   layout virtualenv  → virtualenv (requiere pip install virtualenv)
+#
+# Todas crean .venv si no existe, exportan VIRTUAL_ENV para Starship,
+# y agregan el bin al PATH (todo reversible al salir del directorio).
+# El subdirectorio depende del SO: bin/ en Unix, Scripts/ en Windows.
+
+# ── uv (recomendado) ──────────────────────────────────────────────────
+
+layout_uv() {
+    if ! [ -f ".venv/{{ $venvPy }}" ]; then
+        uv venv
+    fi
+
+    VIRTUAL_ENV="$PWD/.venv"
+    export VIRTUAL_ENV
+    PATH_add "$VIRTUAL_ENV/{{ $venvBin }}"
+}
+
+# ── python -m venv (built-in, sin dependencias) ───────────────────────
+
+layout_venv() {
+    if ! [ -f ".venv/{{ $venvPy }}" ]; then
+        python -m venv .venv
+    fi
+
+    VIRTUAL_ENV="$PWD/.venv"
+    export VIRTUAL_ENV
+    PATH_add "$VIRTUAL_ENV/{{ $venvBin }}"
+}
+
+# ── virtualenv (requiere pip install virtualenv) ──────────────────────
+
+layout_virtualenv() {
+    if ! [ -f ".venv/{{ $venvPy }}" ]; then
+        virtualenv .venv
+    fi
+
+    VIRTUAL_ENV="$PWD/.venv"
+    export VIRTUAL_ENV
+    PATH_add "$VIRTUAL_ENV/{{ $venvBin }}"
+}

@@ -27,6 +27,7 @@ install-packages.ps1
 README.md
 Brewfile
 scoopfile.json
+scoopfile.apps.json
 LICENSE
 odd/**
 scripts/**

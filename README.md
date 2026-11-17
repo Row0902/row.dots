@@ -41,6 +41,7 @@ Reglas que el repo cumple hoy, para no reintroducir los mismos bugs:
 - `run_once_after_set-xdg` fija además `GH_CONFIG_DIR` en `%APPDATA%\GitHub CLI`: `gh` prefiere `$XDG_CONFIG_HOME` si existe y ahí no tiene sus credenciales, así que sin esa variable responde «not logged in» con XDG activo. Se resuelve por variable de usuario y no por perfil, para cubrir PowerShell, nushell y Git Bash a la vez.
 - La config de Scoop vive en el provisioner, nunca en `~/.config/scoop/config.json` editado a mano (Scoop reescribe ese archivo en cada `update`): `autostash_on_conflict` (que solo afecta el update del repo de Scoop, no los buckets), `cat_style plain`, `show_update_log false` y `aria2-warning-enabled false`, todos idempotentes. La clave que Scoop lee es `aria2-warning-enabled` **sin `c`**; `aria2c-warning-enabled` es inerte y el script la borra. `use_sqlite_cache` se activa recién después del `scoop import`, porque encenderlo dispara una descarga de SQLite dentro de `add_bucket` y una caída de red ahí abortaría la instalación de las apps.
 - Los runtimes de mise se actualizan con `mise up` (respeta `minimum_release_age`, 24 h por defecto), y mise en sí con `scoop update mise`, porque Scoop es su dueño en Windows.
+- Los paquetes de Windows se declaran en **dos archivos con dueños distintos**: `scoopfile.json` (toolchain que necesita cualquier máquina) y `scoopfile.apps.json` (apps de escritorio del dueño del repo). El provisioner los importa en ese orden y el segundo es opcional, así una máquina que solo necesita las herramientas de desarrollo no arrastra las apps de escritorio.
 - Aplica exactamente un provisioner por OS.
 - `.chezmoiversion` fija la versión mínima de chezmoi (2.74.0).
 
@@ -165,6 +166,8 @@ row.dots/
 ├── run_once_after_install-runtimes.ps1.tmpl    # Windows: mise instala los runtimes
 ├── run_onchange_after_copy-powershell-profiles.ps1.tmpl  # Copia el perfil a Documents
 ├── Brewfile                             # Catálogo de paquetes de Homebrew
+├── scoopfile.json                       # Tools que necesita todo equipo (importado primero)
+├── scoopfile.apps.json                  # Apps de escritorio del dueño del repo (importado después, opcional)
 ├── LICENSE                              # MIT
 ├── README.md
 ├── odd/                                 # Registros de decisión — nunca se aplican a $HOME

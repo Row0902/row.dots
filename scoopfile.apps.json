@@ -1,0 +1,29 @@
+{
+    "buckets": [
+        {
+            "Name": "main",
+            "Source": "https://github.com/ScoopInstaller/Main.git"
+        },
+        {
+            "Name": "extras",
+            "Source": "https://github.com/ScoopInstaller/Extras"
+        }
+    ],
+    "apps": [
+        { "Name": "ffmpeg", "Source": "main" },
+        { "Name": "microsoft-coreutils", "Source": "main" },
+        { "Name": "nano", "Source": "main" },
+        { "Name": "typst", "Source": "main" },
+        { "Name": "discord", "Source": "extras" },
+        { "Name": "geekuninstaller", "Source": "extras" },
+        { "Name": "memreduct", "Source": "extras" },
+        { "Name": "obs-studio", "Source": "extras" },
+        { "Name": "pear-desktop", "Source": "extras" },
+        { "Name": "potplayer", "Source": "extras" },
+        { "Name": "reaper", "Source": "extras" },
+        { "Name": "volume2", "Source": "extras" },
+        { "Name": "vscode", "Source": "extras" },
+        { "Name": "windhawk", "Source": "extras" },
+        { "Name": "zoom", "Source": "extras" }
+    ]
+}

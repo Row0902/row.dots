@@ -40,11 +40,17 @@ Objetivo: saneamiento, portabilidad real entre máquinas/usuarios y eliminación
 - **T24** · S9 · inline · — · `run_once_after_install-runtimes.ps1.tmpl`: asegura el dir de shims en el PATH de usuario y corre `mise install`. Va *después* de aplicar archivos porque necesita el `mise.toml` ya escrito.
 - **T25** · S9 · inline · — · Máquina: desinstalar los duplicados `gh`/`uv` de scoop, `mise install` para bun, y verificar los seis runtimes.
 - **T26** · S5 · verify · — · Verificar: `mise ls`, `where` de cada runtime, render de los scripts, `apply --dry-run`.
+- **T27** · S10 · inline · — · `scoopfile.json` como única fuente de la lista de Windows (formato de `scoop export`), con los buckets main/extras/nerd-fonts/row y las 14 apps; el provisioner pasa a `scoop import` y el array inline desaparece. `.chezmoiignore` suma `scoopfile.json` para que no aterrice en `$HOME`.
+- **T28** · S10 · inline · — · Orden del provisioner de Windows: instalar Scoop → refrescar PATH → `scoop update` → `scoop import` → winget.
+- **T29** · S10 · inline · — · Linux: `brew update && brew upgrade` antes de instalar, `brew tap Row0902/homebrew-tap`, `brew trust` al tap completo y a `/cutver` (más el existente de opencode), y `cutver-plugins` en el `Brewfile`.
+- **T30** · S5,S10 · verify · — · Verificar: `scoop import` idempotente (no-op con todo instalado), buckets presentes, render de los dos scripts, `apply --dry-run`.
 
 - **S7** — «antes puliremos windows completo que es mi sistema operativo principal»: Windows es el SO principal y tiene que quedar coherente antes de validar la rama Linux en Fedora WSL. Un archivo aplicado que nadie lee, o un config leído que no está en el repo, es deuda.
 - **S8** — Decisiones de S7: nushell se unifica con `XDG_CONFIG_HOME` seteado desde el repo (User scope, vía `run_once`), y los perfiles de PowerShell se incorporan por copia `run_onchange` a `Documents` (sin symlinks, que requieren elevación y no cruzan de C: a D:).
 
 - **S9** — «uv se debe instalar a través de mise en lugar de scoop porque no solo gestiona versiones de python, sino, proyectos completos con cosas que mise no hace, y rustup debe permanecer porque gestiona cargo, rusc, etc.»: mise es la vía de instalación y el dueño de versión para node, pnpm, go, uv, gh y bun; rustup queda independiente. Y bun «dejarlo y agregarlo a mise».
+
+- **S10** — «scoop al igual que brew permite exportar los programas a un archivo e instalarlos todos desde un archivo y hay que organizar el orden en la que suceden las cosas en los gestores brew y scoop, porque una vez que se instalen lo primero que debe suceder es actualizarse con brew update && brew upgrade y scoop update, en scoop agregar el bucket extra, nerdfont y mi bucket personal: https://github.com/Row0902/scoop-bucket, desde este instalar cutver-plugins. En brew agregar mi tap personal: https://github.com/Row0902/homebrew-tap, aplicar el trust al tap completo y a /cutver e instalar cutver-plugins»: las listas de paquetes son archivos declarativos (`scoopfile.json` / `Brewfile`), y el orden es siempre instalar el gestor → actualizarlo → declarar buckets/taps y apps → instalar lo que ningún gestor portable provee.
 
 ## Log
 

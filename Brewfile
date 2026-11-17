@@ -27,6 +27,10 @@ brew "lazygit"
 brew "mise"
 brew "rustup"
 
+# ── Tools propios ────────────────────────────────────────────────────
+tap "Row0902/homebrew-tap"
+brew "Row0902/tap/cutver-plugins"
+
 # AI
 tap "Gentleman-Programming/homebrew-tap"
 brew "gentle-ai"

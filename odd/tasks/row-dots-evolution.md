@@ -34,9 +34,17 @@ Objetivo: saneamiento, portabilidad real entre máquinas/usuarios y eliminación
 - **T18** · S1,S7 · inline · 7f1e8ce · Limpieza del repo: claves muertas de `.chezmoidata.toml`, borrar `os-path.tmpl` y `git-identity.tmpl`, `dot_gitignore_global.tmpl` → sin `.tmpl`, y corregir el README (provisioner scoop/winget, árbol real).
 - **T19** · S5,S7 · verify · sin commit (verificación) · Verificación final de Windows: `chezmoi managed`/`status`/`apply --dry-run`, `nu` leyendo el config gestionado, perfiles copiados, sin restos, y render de cada template tocado.
 - **T20** · S1,S6,S7 · inline · ver commit · Recortar las listas: en Windows salen `atuin`, `fnm` y `neovim` porque su única integración vive en `dot_config/fish/**` (Linux-only), y se desinstalan de la máquina; `eza`, `bat`, `ripgrep` y `fzf` se quedan por decisión del dueño (dato que respalda lo de `fnm`: `node`/`npm` los provee `mise`, `fnm list` → `* system`). En el `Brewfile` salen `less` (redundante con `bat` y con el `less` del sistema) y `tmux` + `zellij` (dos multiplexores, cero referencias en la config; la sección Terminal desaparece).
+- **T21** · S9 · inline · — · Gestionar `dot_config/mise/config.toml`: node `lts`, pnpm, go, uv, gh y bun. Sin `rust`: rustup gobierna cargo/rustc.
+- **T22** · S9 · inline · — · Listas: scoop pierde `gh` y `uv` (ya los provee mise) y gana `mise`; winget gana `Rustlang.Rustup`; el `Brewfile` pierde `uv`, `fnm`, `bun` + su tap y gana `mise`.
+- **T23** · S9 · inline · — · `conf.d/fnm.fish` → `conf.d/mise.fish` con `mise activate fish | source`: sin activación, en Linux los shims de mise no están en PATH y node/go/pnpm desaparecen.
+- **T24** · S9 · inline · — · `run_once_after_install-runtimes.ps1.tmpl`: asegura el dir de shims en el PATH de usuario y corre `mise install`. Va *después* de aplicar archivos porque necesita el `mise.toml` ya escrito.
+- **T25** · S9 · inline · — · Máquina: desinstalar los duplicados `gh`/`uv` de scoop, `mise install` para bun, y verificar los seis runtimes.
+- **T26** · S5 · verify · — · Verificar: `mise ls`, `where` de cada runtime, render de los scripts, `apply --dry-run`.
 
 - **S7** — «antes puliremos windows completo que es mi sistema operativo principal»: Windows es el SO principal y tiene que quedar coherente antes de validar la rama Linux en Fedora WSL. Un archivo aplicado que nadie lee, o un config leído que no está en el repo, es deuda.
 - **S8** — Decisiones de S7: nushell se unifica con `XDG_CONFIG_HOME` seteado desde el repo (User scope, vía `run_once`), y los perfiles de PowerShell se incorporan por copia `run_onchange` a `Documents` (sin symlinks, que requieren elevación y no cruzan de C: a D:).
+
+- **S9** — «uv se debe instalar a través de mise en lugar de scoop porque no solo gestiona versiones de python, sino, proyectos completos con cosas que mise no hace, y rustup debe permanecer porque gestiona cargo, rusc, etc.»: mise es la vía de instalación y el dueño de versión para node, pnpm, go, uv, gh y bun; rustup queda independiente. Y bun «dejarlo y agregarlo a mise».
 
 ## Log
 

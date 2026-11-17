@@ -24,7 +24,8 @@ Optimizado para **Windows 11** y **Linux**, gestionado declarativamente con [che
 | **Git & Diff** | [Delta](https://github.com/dandavison/delta) | Syntax highlighting, vistas side-by-side y firma criptográfica SSH |
 | **Entornos** | [direnv](https://direnv.net/) | Carga automática de variables de entorno y layouts para Python (`uv`, `venv`) |
 | **Productividad** | [zoxide](https://github.com/ajeetdsouza/zoxide), [eza](https://eza.rocks/), [bat](https://github.com/sharkdp/bat), [fzf](https://github.com/junegunn/fzf) | Reemplazos modernos para `cd`, `ls`, `cat` y búsqueda interactiva |
-| **Paquetes** | [Scoop](https://scoop.sh/) / [Homebrew](https://brew.sh/) | Instalación sin privilegios en Windows y Linux; winget queda solo para lo que integra con el sistema (Git, PowerShell) |
+| **Paquetes** | [Scoop](https://scoop.sh/) / [Homebrew](https://brew.sh/) | Instalación sin privilegios en Windows y Linux; winget queda solo para lo que integra con el sistema (Git, PowerShell, rustup) |
+| **Runtimes** | [mise](https://mise.jdx.dev/) / [rustup](https://rustup.rs/) | mise posee node, pnpm, go, uv, gh y bun desde un solo archivo; rustup posee cargo y rustc |
 
 ---
 
@@ -51,8 +52,8 @@ El proceso de inicialización clona el repositorio, solicita interactivamente tu
 pwsh -c "& { iex (iwr 'https://get.chezmoi.io') } ; chezmoi init --apply Row0902/row.dots"
 ```
 
-> **Aprovisionamiento automático (Scoop + winget):**
-> `chezmoi apply` ejecuta `run_once_before_install-packages.ps1`, el único provisioner de Windows: instala Scoop y con él las CLI portables (starship, eza, bat, fd, ripgrep, fzf, zoxide, atuin, delta, gh, lazygit, uv, fnm, neovim, direnv, nu). winget queda solo para Git for Windows y PowerShell 7, que necesitan integración con el sistema.
+> **Aprovisionamiento automático (dos fases):**
+> `chezmoi apply` ejecuta primero `run_once_before_install-packages.ps1`, que instala con Scoop las CLI portables (starship, eza, bat, fd, ripgrep, fzf, zoxide, delta, lazygit, direnv, nu y mise) y con winget lo que integra con el sistema (Git for Windows, PowerShell 7 y rustup). Después, `run_once_after_install-runtimes.ps1` hace que mise instale node, pnpm, go, uv, gh y bun desde `dot_config/mise/config.toml`.
 >
 > **Bootstrap opcional y manual (Scoop + ssh-agent):**  
 > Si preferís el catálogo de Scoop y querés configurar el servicio `ssh-agent`:
@@ -145,6 +146,7 @@ row.dots/
 │   │   ├── conf.d/                      # Snippets, incluido 00-path.fish.tmpl
 │   │   ├── functions/                   # Funciones propias (cdl, mkcd, extract…)
 │   │   └── completions/                 # Completions propias
+│   ├── mise/                            # config.toml: node, pnpm, go, uv, gh, bun
 │   ├── nushell/                         # config.nu + autoloads (starship, direnv, zoxide)
 │   ├── powershell/                      # Cuerpo del perfil de PowerShell 7
 │   └── starship.toml.tmpl               # Prompt con badge dinámico de OS
@@ -154,6 +156,7 @@ row.dots/
 ├── run_once_before_install-homebrew.sh.tmpl   # Provisioner Linux/macOS (Homebrew + Brewfile)
 ├── run_once_before_install-packages.ps1.tmpl  # Provisioner Windows (Scoop + winget)
 ├── run_once_after_set-xdg.ps1.tmpl             # Windows: XDG_CONFIG_HOME para nushell
+├── run_once_after_install-runtimes.ps1.tmpl    # Windows: mise instala los runtimes
 ├── run_onchange_after_copy-powershell-profiles.ps1.tmpl  # Copia el perfil a Documents
 ├── Brewfile                             # Catálogo de paquetes de Homebrew
 ├── LICENSE                              # MIT

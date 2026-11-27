@@ -12,7 +12,6 @@ brew "fd"
 brew "ripgrep"
 brew "fzf"
 brew "zoxide"
-brew "atuin"
 brew "direnv"
 brew "neovim"
 

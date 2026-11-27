@@ -16,12 +16,26 @@
 
 # Editor used by `chezmoi edit`. .chezmoidata.toml is NOT available while this
 # config template renders, so resolve it against the machine's PATH instead.
-{{- if lookPath "code" }}
-[edit]
-    command = "code --wait"
-{{- else if lookPath "nvim" }}
+#
+# The order depends on the OS. On Linux nvim wins: under WSL, `lookPath "code"`
+# resolves the *Windows* VS Code through /mnt/c interop, and handing it a Linux
+# path breaks `chezmoi edit`. On Windows the VS Code launcher is the reliable one.
+{{- if eq .chezmoi.os "linux" }}
+{{-   if lookPath "nvim" }}
 [edit]
     command = "nvim"
+{{-   else if lookPath "code" }}
+[edit]
+    command = "code --wait"
+{{-   end }}
+{{- else }}
+{{-   if lookPath "code" }}
+[edit]
+    command = "code --wait"
+{{-   else if lookPath "nvim" }}
+[edit]
+    command = "nvim"
+{{-   end }}
 {{- end }}
 
 {{- if lookPath "delta" }}

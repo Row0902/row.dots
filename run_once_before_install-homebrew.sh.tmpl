@@ -27,7 +27,10 @@ echo ""
 
 if ! command -v brew &> /dev/null && [ ! -d "/home/linuxbrew/.linuxbrew/bin" ]; then
     echo "🍺 Homebrew not found. Executing official installation script..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    # NONINTERACTIVE=1: the installer otherwise waits for "Press RETURN to
+    # continue" on /dev/tty, so an unattended `chezmoi apply` (WSL, CI, a
+    # scripted bootstrap) hangs there instead of installing Homebrew.
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
 if [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then

@@ -1,0 +1,36 @@
+#!/bin/bash
+# chezmoi: run_once_after_install-runtimes.sh.tmpl
+# Unix counterpart of install-runtimes.ps1.
+#
+# mise owns node, pnpm, go, uv, gh and bun on every platform; the package lists
+# only install mise itself. This runs *after* the file targets so
+# ~/.config/mise/config.toml already exists when mise reads it.
+#
+# rust is deliberately absent, same as in the Windows script: rustup owns cargo
+# and rustc, and a toolchain is a per-machine choice (`rustup default stable`),
+# not something these dots install.
+{{ if eq .chezmoi.os "windows" -}}
+# Windows uses install-runtimes.ps1.
+exit 0
+{{ end -}}
+if [ -d /home/linuxbrew/.linuxbrew/bin ]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+# mise resolves the nearest config from the working directory, and chezmoi
+# inherits the one it was invoked from. Pin it to $HOME so this always reads the
+# global ~/.config/mise/config.toml and never a project's.
+cd "$HOME" || exit 1
+
+if ! command -v mise >/dev/null 2>&1; then
+    echo "mise not found — runtimes skipped." >&2
+    exit 0
+fi
+
+echo "Installing runtimes from mise config..."
+if ! mise install; then
+    echo "mise install failed — runtimes are incomplete." >&2
+    exit 1
+fi
+
+mise ls

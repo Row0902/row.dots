@@ -21,6 +21,7 @@ AppData
 # "fork/exec ...: exec format error" and leaves `chezmoi status` dirty forever.
 {{ if eq .chezmoi.os "windows" }}
 install-homebrew.sh
+install-runtimes.sh
 {{ else }}
 install-packages.ps1
 set-xdg.ps1

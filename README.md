@@ -74,6 +74,11 @@ pwsh -c "& { iex (iwr 'https://get.chezmoi.io') } ; chezmoi init --apply Row0902
 sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply Row0902/row.dots
 ```
 
+> **Aprovisionamiento automático (dos fases):**
+> `chezmoi apply` ejecuta primero `run_once_before_install-homebrew.sh`, que instala las dependencias de compilación del sistema, Homebrew (con `NONINTERACTIVE=1`, para que no se quede esperando confirmación por `/dev/tty`), corre `brew update && brew upgrade`, da de alta los taps con su `brew trust`, aplica `brew bundle` y registra fish y nu en `/etc/shells` para dejar fish como shell por defecto. Después, `run_once_after_install-runtimes.sh` hace que mise instale node, pnpm, go, uv, gh y bun desde `dot_config/mise/config.toml`.
+>
+> Rust no entra en ninguna de las dos fases: rustup gobierna cargo y rustc, y el toolchain es una decisión de máquina (`rustup default stable`).
+
 > **Bootstrap opcional (Homebrew + bundle):**  
 > Para instalar dependencias del sistema, cambiar la shell por defecto a Fish y autenticar GitHub CLI:
 > ```bash
@@ -161,6 +166,7 @@ row.dots/
 ├── dot_gitconfig.local.tmpl             # Identidad y clave detectadas en cada máquina
 ├── dot_gitignore_global                 # Exclusión global (Zone.Identifier, etc.)
 ├── run_once_before_install-homebrew.sh.tmpl   # Provisioner Linux/macOS (Homebrew + Brewfile)
+├── run_once_after_install-runtimes.sh.tmpl    # Linux/macOS: mise instala los runtimes
 ├── run_once_before_install-packages.ps1.tmpl  # Provisioner Windows (Scoop + winget)
 ├── run_once_after_set-xdg.ps1.tmpl             # Windows: XDG_CONFIG_HOME para nushell
 ├── run_once_after_install-runtimes.ps1.tmpl    # Windows: mise instala los runtimes

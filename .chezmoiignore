@@ -15,11 +15,17 @@ AppData
 # Provisioners. Patterns are matched against target paths, not source names:
 #   run_once_before_install-homebrew.sh.tmpl  -> install-homebrew.sh
 #   run_once_before_install-packages.ps1.tmpl -> install-packages.ps1
-# Each OS keeps exactly its own provisioner; the other one is ignored.
+# Each OS keeps exactly its own provisioners; every other one is ignored.
+# The three PowerShell scripts are Windows-only. Without this gate chezmoi
+# tries to execute them on Linux, aborts with
+# "fork/exec ...: exec format error" and leaves `chezmoi status` dirty forever.
 {{ if eq .chezmoi.os "windows" }}
 install-homebrew.sh
 {{ else }}
 install-packages.ps1
+set-xdg.ps1
+install-runtimes.ps1
+copy-powershell-profiles.ps1
 {{ end }}
 
 
